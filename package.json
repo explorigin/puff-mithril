@@ -1,0 +1,16 @@
+{
+  "name": "Puff",
+  "version": "0.0.1",
+  "type": "app",
+  "devDependencies": {
+    "gulp": "~3.6.2",
+    "gulp-jsmin": "~0.1.4",
+    "gulp-stylus": "~1.0.0",
+    "gulp-coffee": "~1.4.2",
+    "gulp-html-replace": "~1.1.0",
+    "gulp-manifest": "0.0.3",
+    "gulp-concat": "~2.2.0",
+    "gulp-changed": "~0.3.0",
+    "gulp-msx": "~0.1.0"
+  }
+}

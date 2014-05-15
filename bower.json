@@ -1,0 +1,30 @@
+{
+  "name": "Puff",
+  "version": "0.0.1",
+  "authors": [
+    "Timothy Farrell <explorigin@gmail.com>"
+  ],
+  "description": "Personal Cloud App Environment",
+  "main": "app/puff.js",
+  "moduleType": [
+    "amd"
+  ],
+  "license": "MIT",
+  "homepage": "https://puff.thecookiejar.me",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "app/bower_components"
+  ],
+  "dependencies": {
+    "mithril": "~0.1.12",
+    "animate.css": "~3.1.1",
+    "font-awesome": "~4.0.3",
+    "bootstrap": "~3.1.1",
+    "pubsub-js": "~1.4.2"
+  }
+}
