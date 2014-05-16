@@ -8,8 +8,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <!-- build:css -->
+        <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
+        <link rel="stylesheet" href="bower_components/animate.css/animate.css">
         <link rel="stylesheet" href="css/core.css">
-        <link rel="stylesheet" href="css/center.css">
+        <link rel="stylesheet" href="css/index.css">
         <!-- endbuild -->
     </head>
     <body>
@@ -20,9 +22,15 @@
             </p>
         <![endif]-->
 
+        <section class="wrapper-md login">
+            <div class="row m-n">
+                <div id="content" class="col-md-4 col-md-offset-4"></div>
+            </div>
+        </section>
+
         <div class="floater"></div>
         <div class="centered">
-            <img src="images/cookiemonster.gif" alt="Waiting Cookie Monster">
+            <img id="cookieMonster" src="images/cookiemonster.gif" alt="Waiting Cookie Monster">
         </div>
 
         <div id="bottom">
@@ -30,4 +38,18 @@
             <li><a href="/notes/">Notes</a></li>
           </ul>
         </div>
+
+        <!-- build:js -->
+        <script src="bower_components/mithril/mithril.js"></script>
+        <script src="js/helpers/di.mithril.js"></script>
+        <script src="js/helpers/mithril-helpers.js"></script>
+        <script src="js/components/panel.js"></script>
+        <script src="js/components/form.js"></script>
+        <script src="js/helpers/submit.js"></script>
+        <script src="js/helpers/input.js"></script>
+        <script src="js/pages/index.js"></script>
+        <script src="js/config.js"></script>
+        <script src="js/index.js"></script>
+        <!-- endbuild -->
+    </body>
 </html>

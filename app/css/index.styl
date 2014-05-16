@@ -1,0 +1,48 @@
+elementHeight = 275px
+elementWidth = 500px
+
+.floater
+    position: relative
+    float: left
+    height: 50%
+    margin-bottom: -(elementHeight/2)
+    width: 100%
+
+.centered
+    position: relative
+    clear: left
+    height: elementHeight
+    width: elementWidth
+    margin: 0 auto
+    background: #fff
+
+.login
+    .form-group
+        margin-right: 4px
+
+        &:last-child
+            margin-right: inherit
+            float: right
+
+    .panel
+        border-radius: 2px
+        border-color: #EBEFF6
+
+    .panel, #content
+        background-color: transparent
+        box-shadow: none
+        border: 0px
+
+#bottom
+    position: absolute
+    bottom:10px
+    right:10px
+
+
+#bottom a, #bottom a:link, #bottom a:visited
+    text-decoration: none
+    color: lightgray
+
+
+#bottom ul li
+    list-style: none

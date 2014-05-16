@@ -6,20 +6,22 @@ var gulp = require('gulp'),
     stylus = require('gulp-stylus'),
     concat = require('gulp-concat'),
     msx = require('gulp-msx'),
+    assets = require('gulp-assets'),
+    htmlmin = require('gulp-htmlmin'),
+    uglify = require('gulp-uglify'),
+    csso = require('gulp-csso'),
 
     paths = {
         html: ['app/**/*.html'],
-        distHtml: ['build/**/*.html'],
+        distHtml: ['build/*.html'],
         images: ['app/**/*.{gif,jpg,png}'],
         distImages: ['build/**/*.{gif,jpg,png}'],
         coffee: ['app/**/*.coffee'],
         javascript: ['app/**/*.js', '!app/**/*.min.js'],
         jsx: ['app/**/*.jsx'],
-        distJavascript: ['build/**/*.js'],
         msx: ['app/**/*.jsx'],
         stylus: ['app/**/*.styl', '!app/bower_components/**/*.styl'],
-        css: ['app/**/*.css'],
-        distCss: ['build/**/*.css']
+        css: ['app/**/*.css']
     };
 
 
@@ -63,14 +65,18 @@ gulp.task('images', function() {
 
 // Concat and minify for distribution
 gulp.task('dist-styles', ['styles'], function() {
-    return gulp.src(paths.distCss)
+    return gulp.src(paths.distHtml)
+        .pipe(assets({js: false, css: true}))
         .pipe(concat('all.css'))
+        .pipe(csso())
         .pipe(gulp.dest('dist'));
 });
 
 gulp.task('dist-scripts', ['scripts'], function() {
-    return gulp.src(paths.distJavascript)
+    return gulp.src(paths.distHtml)
+        .pipe(assets({js: true, css: false}))
         .pipe(concat('all.js'))
+        .pipe(uglify())
         .pipe(gulp.dest('dist'));
 });
 
@@ -84,11 +90,12 @@ gulp.task('dist-html', ['html'], function() {
             js: 'all.js',
             css: 'all.css'
         }))
+        .pipe(htmlmin({collapseWhitespace: true}))
         .pipe(gulp.dest('dist'));
 });
 
 gulp.task('manifest', ['dist-html', 'dist-styles', 'dist-scripts', 'dist-images'], function(){
-    return gulp.src(['dist/**/*'])
+    return gulp.src(['dist/*.html', 'dist/*.css', 'dist/*.js', 'dist/images/*'])
         .pipe(manifest({
             hash: true,
             preferOnline: true,
