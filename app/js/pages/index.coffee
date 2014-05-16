@@ -1,7 +1,9 @@
 ((m) -> m.factory(
     'pages.index',
-    ['application.config', 'components.form', 'components.panel']
-    (cfg, Form, Panel) ->
+    ['application.config', 'components.form', 'components.panel', 'helpers.storage']
+    (cfg, Form, Panel, Storage) ->
+        storage = new Storage()
+
         controller: () ->
             @timeout = m.prop(null)
             @showLoginForm = m.prop(false)
@@ -18,10 +20,11 @@
                 if @showLoginForm() is false
                     clearTimeout(@timeout)
 
-            @submit = (evt) =>
+            @submit = (evt, data) =>
                 evt.defaultPrevented = true
+                storage.account.login(data.username, data.password)
                 alert('Oh look, you found my login form. Good for you.')
-                @showLoginForm(false)
+
             return @
 
         view: (ctrl) -> [
@@ -38,7 +41,7 @@
                                 },
                                 {
                                     placeholder: 'Password'
-                                    name: 'pw'
+                                    name: 'password'
                                     type: 'password'
                                 },
                                 {
