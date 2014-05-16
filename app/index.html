@@ -13,32 +13,6 @@
         <link rel="stylesheet" href="css/core.css">
         <link rel="stylesheet" href="css/index.css">
         <!-- endbuild -->
-    </head>
-    <body>
-        <!--[if lt IE 9]>
-            <p class="browsehappy">
-                You are using an <strong>outdated</strong> browser.
-                Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.
-            </p>
-        <![endif]-->
-
-        <section class="wrapper-md login">
-            <div class="row m-n">
-                <div id="content" class="col-md-4 col-md-offset-4"></div>
-            </div>
-        </section>
-
-        <div class="floater"></div>
-        <div class="centered">
-            <img id="cookieMonster" src="images/cookiemonster.gif" alt="Waiting Cookie Monster">
-        </div>
-
-        <div id="bottom">
-          <ul>
-            <li><a href="/notes/">Notes</a></li>
-          </ul>
-        </div>
-
         <!-- build:js -->
         <script src="bower_components/mithril/mithril.js"></script>
         <script src="js/helpers/di.mithril.js"></script>
@@ -49,7 +23,14 @@
         <script src="js/helpers/input.js"></script>
         <script src="js/pages/index.js"></script>
         <script src="js/config.js"></script>
-        <script src="js/index.js"></script>
-        <!-- endbuild -->
+        <script>document.addEventListener('DOMContentLoaded', function() {m.module(document.body, m.handle('pages.index'))});</script>
+        <!-- endbuild -->    </head>
+    <body>
+        <!--[if lt IE 9]>
+            <p class="browsehappy">
+                You are using an <strong>outdated</strong> browser.
+                Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.
+            </p>
+        <![endif]-->
     </body>
 </html>
