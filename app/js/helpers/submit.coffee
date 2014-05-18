@@ -2,13 +2,11 @@
 ((m) ->
     m.factory(
         'helpers.submit'
-        () ->
+        ['helpers.button']
+        (Button) ->
             (options) ->
                 options.type = 'submit'
-                options['class'] = (options['class'] or '') + 'form-control btn btn-default'
-
-                m('div.form-group', [
-                    m('button', m.omit(options, 'label', 'helptext', 'text'), options.text)
-                ])
+                options['class'] = (options['class'] or '') + 'form-control'
+                m('div.form-group', [Button(options)])
     )
 )(Mithril)
