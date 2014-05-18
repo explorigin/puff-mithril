@@ -1,5 +1,5 @@
 # components/storage.js
-((m) -> m.factory(
+m.factory(
     'helpers.storage'
     () ->
         idIncrement = Math.floor(Math.random() * 100)
@@ -105,4 +105,4 @@
                     subscriptions.account[evtName][id] = callback
 
             return @
-))(Mithril)
+)
