@@ -13,7 +13,6 @@
     "gulp-htmlmin": "^0.1.2",
     "gulp-jsmin": "~0.1.4",
     "gulp-manifest": "0.0.3",
-    "gulp-msx": "~0.1.0",
     "gulp-stylus": "~1.0.0",
     "gulp-uglify": "^0.3.0"
   }

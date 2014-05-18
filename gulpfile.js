@@ -5,7 +5,6 @@ var gulp = require('gulp'),
     coffee = require('gulp-coffee'),
     stylus = require('gulp-stylus'),
     concat = require('gulp-concat'),
-    msx = require('gulp-msx'),
     assets = require('gulp-assets'),
     htmlmin = require('gulp-htmlmin'),
     uglify = require('gulp-uglify'),
@@ -18,8 +17,6 @@ var gulp = require('gulp'),
         distImages: ['build/**/*.{gif,jpg,png}'],
         coffee: ['app/**/*.coffee'],
         javascript: ['app/**/*.js', '!app/**/*.min.js'],
-        jsx: ['app/**/*.jsx'],
-        msx: ['app/**/*.jsx'],
         stylus: ['app/**/*.styl', '!app/bower_components/**/*.styl'],
         css: ['app/**/*.css']
     };
@@ -39,20 +36,13 @@ gulp.task('javascript', function() {
     return gulp.src(paths.javascript).pipe(gulp.dest('build'));
 });
 
-gulp.task('jsx', function() {
-    return gulp.src(paths.jsx)
-               .pipe(msx())
-               .pipe(gulp.dest('build'));
-});
-
 gulp.task('coffeescript', function() {
     return gulp.src(paths.coffee)
         .pipe(coffee({bare: true}))
-        .pipe(msx())
         .pipe(gulp.dest('build'));
 });
 
-gulp.task('scripts', ['coffeescript', 'javascript', 'jsx']);
+gulp.task('scripts', ['coffeescript', 'javascript']);
 gulp.task('styles', ['stylus', 'css']);
 
 gulp.task('html', function() {
