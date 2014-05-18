@@ -30,15 +30,15 @@ m.factory(
             @account =
                 signUp: (username, password) ->
                      d = m.deferred()
-                     d.resolve()
+                     setTimeout(() -> d.resolve())
                      d.promise
                 signIn: (username, password) ->
                      d = m.deferred()
-                     d.resolve()
+                     setTimeout(() -> d.resolve())
                      d.promise
                 signOut: () ->
                      d = m.deferred()
-                     d.resolve()
+                     setTimeout(() -> d.resolve())
                      d.promise
                 changePassword: (password, newPassword) ->
                      d = m.deferred()

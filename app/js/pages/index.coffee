@@ -1,52 +1,66 @@
-((m) -> m.factory(
+m.factory(
     'pages.index',
     ['application.config', 'components.form', 'components.panel', 'helpers.storage']
     (cfg, Form, Panel, Storage) ->
+        USER_INPUT = 'u'
+        CHECKING = 'c'
+        NOT_VALID = 'n'
+        NOT_SHOWN = 'ns'
+
         storage = new Storage()
 
         controller: () ->
             @timeout = m.prop(null)
-            @showLoginForm = m.prop(false)
+            @status = m.prop(NOT_SHOWN)
 
             @mouseover = (evt) =>
-                if @showLoginForm() is false
+                if @status() is NOT_SHOWN
                     @timeout = setTimeout(
                         () =>
-                            @showLoginForm(true)
+                            @status(USER_INPUT)
                         3000
                     )
 
             @mouseout = (evt) =>
-                if @showLoginForm() is false
+                if @status() is NOT_SHOWN
                     clearTimeout(@timeout)
 
             @submit = (evt, data) =>
-                evt.defaultPrevented = true
-                storage.account.login(data.username, data.password)
-                alert('Oh look, you found my login form. Good for you.')
+                evt.preventDefault()
+                @status(CHECKING)
+                pro = storage.account.signIn(data.username, data.password)
+                pro.then(
+                    () ->
+                        alert('successful login')
+                    () =>
+                        @status(NOT_VALID)
+                )
 
             return @
 
         view: (ctrl) -> [
-            m('section', {'class': 'login'}, [
-                m('div', {'class': 'col-md-4 col-md-offset-4'}, [
+            m('section.login', [
+                m('.col-md-4.col-md-offset-4', [
                     Panel(
-                        {'class': if ctrl.showLoginForm() then 'animated slideInDown' else 'hidden'}
+                        {'class': if ctrl.status() is NOT_SHOWN then 'hidden' else 'animated slideInDown'}
                         Form(
                             elements: [
                                 {
                                     placeholder: 'Username'
                                     name: 'username'
                                     autofocus: 'autofocus'
+                                    disabled: ctrl.status() is CHECKING
                                 },
                                 {
                                     placeholder: 'Password'
                                     name: 'password'
                                     type: 'password'
+                                    disabled: ctrl.status() is CHECKING
                                 },
                                 {
                                     text: 'Login'
                                     type: 'submit'
+                                    disabled: ctrl.status() is CHECKING
                                 }
                             ]
                             'class': 'form-inline'
