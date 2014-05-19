@@ -1,6 +1,11 @@
 m.factory(
     'pages.index',
-    ['application.config', 'components.form', 'components.panel', 'helpers.storage']
+    [
+        'application.config',
+        'components.form'
+        'components.panel'
+        'helpers.storage'
+    ]
     (cfg, Form, Panel, Storage) ->
         USER_INPUT = 'u'
         CHECKING = 'c'
@@ -28,10 +33,9 @@ m.factory(
             @submit = (evt, data) =>
                 evt.preventDefault()
                 @status(CHECKING)
-                pro = storage.account.signIn(data.username, data.password)
-                pro.then(
+                storage.account.signIn(data.username, data.password).then(
                     () ->
-                        alert('successful login')
+                        window.location = cfg.pages.home
                     () =>
                         @status(NOT_VALID)
                 )
