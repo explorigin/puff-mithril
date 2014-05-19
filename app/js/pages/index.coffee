@@ -9,8 +9,16 @@ m.factory(
     (cfg, Form, Panel, Storage) ->
         USER_INPUT = 'u'
         CHECKING = 'c'
+        VALID = 'v'
         NOT_VALID = 'n'
-        NOT_SHOWN = 'ns'
+        NOT_SHOWN = 'i'
+
+        PANEL_ANIMATION =
+            i: 'hidden'
+            v: 'animated slideOutUp'
+            u: 'animated slideInDown'
+            c: ''
+            n: ''
 
         storage = new Storage()
 
@@ -34,8 +42,13 @@ m.factory(
                 evt.preventDefault()
                 @status(CHECKING)
                 storage.account.signIn(data.username, data.password).then(
-                    () ->
-                        window.location = cfg.pages.home
+                    () =>
+                        @status(VALID)
+                        setTimeout(
+                            () ->
+                                window.location = cfg.pages.home
+                            500
+                        )
                     () =>
                         @status(NOT_VALID)
                 )
@@ -46,7 +59,7 @@ m.factory(
             m('section.login', [
                 m('.col-md-4.col-md-offset-4', [
                     Panel(
-                        {'class': if ctrl.status() is NOT_SHOWN then 'hidden' else 'animated slideInDown'}
+                        {'class': PANEL_ANIMATION[ctrl.status()]}
                         Form(
                             elements: [
                                 {
