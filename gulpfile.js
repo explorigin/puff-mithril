@@ -16,7 +16,7 @@ var gulp = require('gulp'),
         images: ['app/**/*.{gif,jpg,png}'],
         distImages: ['build/**/*.{gif,jpg,png}'],
         coffee: ['app/**/*.coffee'],
-        javascript: ['app/**/*.js', '!app/**/*.min.js'],
+        copyables: ['app/**/*.{js, woff, map}', '!app/**/*.min.js'],
         stylus: ['app/**/*.styl', '!app/bower_components/**/*.styl'],
         css: ['app/**/*.css']
     };
@@ -32,8 +32,8 @@ gulp.task('stylus', function() {
         .pipe(gulp.dest('build'));
 });
 
-gulp.task('javascript', function() {
-    return gulp.src(paths.javascript).pipe(gulp.dest('build'));
+gulp.task('copyables', function() {
+    return gulp.src(paths.copyables).pipe(gulp.dest('build'));
 });
 
 gulp.task('coffeescript', function() {
@@ -42,7 +42,7 @@ gulp.task('coffeescript', function() {
         .pipe(gulp.dest('build'));
 });
 
-gulp.task('scripts', ['coffeescript', 'javascript']);
+gulp.task('scripts', ['coffeescript', 'copyables']);
 gulp.task('styles', ['stylus', 'css']);
 
 gulp.task('html', function() {
@@ -103,7 +103,7 @@ gulp.task('watch', ['build'], function() {
         console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
     };
 
-    gulp.watch([paths.javascript, paths.coffee], ['scripts'])
+    gulp.watch([paths.copyables, paths.coffee], ['scripts'])
         .on('change', logIt);
     gulp.watch([paths.stylus, paths.css], ['styles'])
         .on('change', logIt);
