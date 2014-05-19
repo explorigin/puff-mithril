@@ -50,11 +50,15 @@ m.factory(
                                     name: 'username'
                                     autofocus: 'autofocus'
                                     disabled: ctrl.status() is CHECKING
+                                    validation: if ctrl.status() is NOT_VALID then 'error' else ''
+                                    helptext: if ctrl.status() is NOT_VALID then 'Username or password is incorrect.' else ''
                                 },
                                 {
                                     placeholder: 'Password'
                                     name: 'password'
                                     type: 'password'
+                                    validation: if ctrl.status() is NOT_VALID then 'error' else ''
+                                    helptext: if ctrl.status() is NOT_VALID then m.trust('&nbsp;') else ''
                                     disabled: ctrl.status() is CHECKING
                                 },
                                 {
