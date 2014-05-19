@@ -30,31 +30,31 @@ m.factory(
             @account =
                 signUp: (username, password) ->
                      d = m.deferred()
-                     setTimeout(() -> d.resolve())
+                     d.reject({msg: 'Not Implemented'})
                      d.promise
                 signIn: (username, password) ->
                      d = m.deferred()
-                     setTimeout(() -> d.resolve())
+                     d.resolve(true)
                      d.promise
                 signOut: () ->
                      d = m.deferred()
-                     setTimeout(() -> d.resolve())
+                     d.resolve(true)
                      d.promise
                 changePassword: (password, newPassword) ->
                      d = m.deferred()
-                     d.resolve()
+                     d.reject({msg: 'Not Implemented'})
                      d.promise
                 changeUsername: (password, newUsername) ->
                      d = m.deferred()
-                     d.resolve()
+                     d.reject({msg: 'Not Implemented'})
                      d.promise
                 resetPassword: (username) ->
                      d = m.deferred()
-                     d.resolve()
+                     d.reject({msg: 'Not Implemented'})
                      d.promise
                 destroy: () ->
                      d = m.deferred()
-                     d.resolve()
+                     d.reject({msg: 'Not Implemented'})
                      d.promise
                 username: m.prop(null)
                 on: (evtName, callback) ->
