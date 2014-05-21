@@ -1,0 +1,134 @@
+a
+    text-decoration: none
+    cursor: pointer
+
+    &:hover, &:focus
+        text-decoration: none
+
+.btn
+    cursor: pointer
+    font-weight: 500
+
+.hbox > aside, .hbox > section
+    padding: 0 !important
+
+.nav-bar
+    position: relative
+
+    & > .btn
+        position: absolute
+        font-size: 1.3em
+        padding: 9px 12px
+        line-height: 30px
+        cursor: pointer
+
+    .nav-brand + .btn
+        right: 0
+        top: 0
+
+.nav-brand
+    text-align: center
+    font-size: 25px
+    line-height: 50px
+    display: block
+
+    &:hover
+        text-decoration: none
+
+.nav-primary
+    line-height: 1.5
+
+    & > ul > li > a
+        padding: 15px 15px
+        position: relative
+        font-weight: bold
+        text-shadow: 0 1px 1px rgba(0,0,0,0.2)
+        border-bottom: 1px solid rgba(0,0,0,0.05) !important
+        border-top: 1px solid rgba(255,255,255,0.05) !important
+        transition: color .3s ease-in-out 0s
+
+    li a i
+        margin-right: 0.5em
+        font-size: 14px
+
+@media (min-width: 768px)
+    .aside-md
+        width: 125px
+
+    .hbox
+        display: table
+        table-layout: fixed
+        border-spacing: 0
+        width: 100%
+
+        &.stretch
+            height: 100%
+
+        & > aside, & > main
+            display: table-cell
+            vertical-align: top
+            height: 100%
+            padding: 0
+            float: none
+
+    .vbox
+        display: table
+        border-spacing: 0
+        position: relative
+        height: 100%
+        width: 100%
+
+        & > .app-menu
+            top: 50px
+            bottom: 50px
+
+        & > section, & > footer
+            position: absolute
+            top: 0
+            bottom: 0
+            width: 100%
+
+        & > footer
+            top: auto
+
+
+
+    #nav
+        z-index: 1000
+        -webkit-transition: width .25s
+        transition: width .25s
+        -webkit-backface-visibility: hidden
+        -moz-backface-visibility: hidden
+        backface-visibility: hidden
+
+        &.nav-vertical
+            width: 80px
+
+            .nav-brand
+                font-size: 20px
+                padding-left: 0
+                padding-right: 0
+
+            .nav-primary > ul > li > a > span
+                display: block
+
+            .nav-primary > ul > li > a
+                position: relative
+                padding: 12px 0
+                font-size: 11px
+                text-align: center
+
+@media (max-width: 767px)
+    .nav-off-screen
+        position: absolute
+        left: 0
+        top: 0
+        bottom: 0
+        width: 75%
+        visibility: visible
+        overflow-x: hidden
+        overflow-y: auto
+        -webkit-overflow-scrolling: touch
+
+        .nav-primary
+            display: block !important

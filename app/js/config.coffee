@@ -7,7 +7,35 @@ m.factory(
             home: 'home.html'
             login: 'index.html'
         oldLinks: [
-                href: '/notes/'
-                text: 'Notes'
+            href: '/notes/'
+            text: 'Notes'
+        ]
+        applications: [
+            {
+                name: 'Files'
+                icon: 'file'
+                query: ''
+                module: 'files'
+            }, {
+                name: 'Notes'
+                icon: 'check'
+                query: null
+                module: 'laverna'
+            }, {
+                name: 'Gallery'
+                icon: 'picture-o'
+                query: null
+                module: 'gallary'
+            }, {
+                name: 'Invoice'
+                icon: 'book'
+                query: null
+                module: 'invoice'
+            }, {
+                name: 'Messages'
+                icon: 'envelope-o'
+                query: null
+                module: 'messages'
+            }
         ]
 )
