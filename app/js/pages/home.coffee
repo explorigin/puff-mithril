@@ -8,12 +8,6 @@ m.factory(
     (cfg, Storage, Icon) ->
         storage = new Storage()
 
-        THEMES =
-            'Light': 'bg-light'
-            'Dark': 'bg-dark'
-            'Night': 'bg-black'
-            'Barney': 'bg-primary'
-
         fullScreenIf = (conditional) ->
             (el, isInit) ->
                 if conditional()
@@ -38,7 +32,7 @@ m.factory(
 
         view: (ctrl) ->
             asideClasses = [
-                THEMES[ctrl.theme()]
+                cfg.THEMES[ctrl.theme()]
                 if ctrl.verticalNav() then 'nav-vertical' else null
                 if ctrl.showOffScreen() then 'nav-off-screen' else null
             ].filter((c) -> c isnt null).join('.')

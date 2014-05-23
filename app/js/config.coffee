@@ -38,4 +38,9 @@ m.factory(
                 module: 'messages'
             }
         ]
+        THEMES =
+            'Light': 'bg-light'
+            'Dark': 'bg-dark'
+            'Night': 'bg-black'
+            'Barney': 'bg-primary'
 )
