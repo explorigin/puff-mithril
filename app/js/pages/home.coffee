@@ -18,10 +18,6 @@ m.factory(
                             break
                     conditional(false)
 
-        toggle = (prop) ->
-            return (evt) ->
-                prop(not prop())
-
         controller: () ->
             @theme = m.prop('Light')
             @requestFullScreen = m.prop(false)
@@ -43,8 +39,8 @@ m.factory(
                         'aside#nav.aside-md.' + asideClasses
                         [
                             m('section.vbox', [
-                                m('header.nav-bar.dker', [
-                                    m('a.btn.btn-link.visible-xs', {onclick: toggle(ctrl.showOffScreen)}, [Icon('bars')])
+                                m('header.nav-bar.bg-dark', [
+                                    m('a.btn.btn-link.visible-xs', {onclick: m.toggle(ctrl.showOffScreen)}, [Icon('bars')])
                                     m('a.nav-brand', {onclick: ctrl.requestFullScreen}, ['Puff'])
                                     m('a.btn.btn-link.visible-xs', [Icon('comment-o')])
                                 ])
@@ -54,24 +50,23 @@ m.factory(
                                             (app) ->
                                                 m(
                                                     'li'
-                                                    [m(
-                                                        'a'
-                                                        {href:"##{app.module}"}
-                                                        [Icon(app.icon), m('span', [app.name])]
-                                                    )]
+                                                    {
+                                                        'class': (if m.route() is app.module then 'active' else '')
+                                                    }
+                                                    [m("a[href=##{app.module}]", [Icon(app.icon), m('span', [app.name])])]
                                                 )
                                             )
                                         )
                                     ])
                                 ])
                                 m('footer.hidden-xs', [
-                                    m('a.btn.btn-link', {onclick: toggle(ctrl.verticalNav)}, [Icon('bars')])
+                                    m('a.btn.btn-link', {onclick: m.toggle(ctrl.verticalNav)}, [Icon('bars')])
                                     m('a.btn.btn-link.pull-right', {href: cfg.pages.login}, [Icon('power-off')])
                                 ])
                             ])
                         ]
                     )
-                    m('main#content')
+                    m('main#content.'+cfg.THEMES[ctrl.theme()])
                 ])
             ]
 )

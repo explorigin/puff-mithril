@@ -1,3 +1,6 @@
+navBarWidthWide = 125px
+navBarWidthNarrow = 80px
+
 a
     text-decoration: none
     cursor: pointer
@@ -11,6 +14,10 @@ a
 
 .hbox > aside, .hbox > section
     padding: 0 !important
+
+#nav
+    .nav-brand
+        text-align: center
 
 .nav-bar
     position: relative
@@ -26,34 +33,39 @@ a
         right: 0
         top: 0
 
-.nav-brand
-    text-align: center
-    font-size: 25px
-    line-height: 50px
-    display: block
+    .nav-brand
+        font-size: 25px
+        line-height: 50px
+        display: block
 
-    &:hover
-        text-decoration: none
+        &:hover
+            text-decoration: none
 
 .nav-primary
     line-height: 1.5
 
-    & > ul > li > a
-        padding: 15px 15px
-        position: relative
-        font-weight: bold
-        text-shadow: 0 1px 1px rgba(0,0,0,0.2)
-        border-bottom: 1px solid rgba(0,0,0,0.05) !important
-        border-top: 1px solid rgba(255,255,255,0.05) !important
-        transition: color .3s ease-in-out 0s
+    & > ul
+        & > li
+            & > a
+                padding: 15px 15px
+                position: relative
+                font-weight: bold
+                text-shadow: 0 1px 1px rgba(0,0,0,0.2)
+                border-bottom: 1px solid rgba(0,0,0,0.05) !important
+                border-top: 1px solid rgba(255,255,255,0.05) !important
+                transition: color .3s ease-in-out 0s
 
+            &.active > a
+                color: #FFF
+                background-color: rgba(0, 0, 0, 0.075) !important
+                text-shadow: none
     li a i
         margin-right: 0.5em
         font-size: 14px
 
 @media (min-width: 768px)
     .aside-md
-        width: 125px
+        width: navBarWidthWide
 
     .hbox
         display: table
@@ -91,8 +103,6 @@ a
         & > footer
             top: auto
 
-
-
     #nav
         z-index: 1000
         -webkit-transition: width .25s
@@ -102,7 +112,7 @@ a
         backface-visibility: hidden
 
         &.nav-vertical
-            width: 80px
+            width: navBarWidthNarrow
 
             .nav-brand
                 font-size: 20px
@@ -117,6 +127,16 @@ a
                 padding: 12px 0
                 font-size: 11px
                 text-align: center
+
+    #content
+        position: absolute
+        top: 0
+        right: 0
+        bottom: 0
+        left: navBarWidthWide
+
+    #nav.nav-vertical + #content
+        left: navBarWidthNarrow
 
 @media (max-width: 767px)
     .nav-off-screen

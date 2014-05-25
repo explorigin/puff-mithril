@@ -23,6 +23,7 @@
         <script src="js/helpers/icon.js"></script>
         <script src="js/components/flashmessage.js"></script>
         <script src="js/components/panel.js"></script>
+        <script src="js/pages/files.js"></script>
         <script src="js/pages/home.js"></script>
         <script src="js/config.js"></script>
         <!-- endbuild -->
@@ -33,6 +34,18 @@
                 You're seeing this message because Javascript is turned off.  This page without Javascript is just as music with no audience.
             </p>
         </noscript>
-        <script>document.addEventListener('DOMContentLoaded', function() {m.module(document.body, m.handle('pages.home'))});</script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                m.module(document.body, m.handle('pages.home'))
+
+                setTimeout(function() {
+                    m.route.mode = 'hash';
+                    m.route(document.getElementById('content'), "", {
+                        "": m.handle('pages.files'),
+                        "gallery": m.handle('pages.gallery')
+                    });
+                }, 0);
+            });
+        </script>
     </body>
 </html>

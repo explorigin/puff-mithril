@@ -16,4 +16,8 @@
         }
         return copy;
     };
+
+    m.toggle = function(prop) {
+        return function(evt) { prop(!prop()); };
+    };
 })(Mithril);

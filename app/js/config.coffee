@@ -25,7 +25,7 @@ m.factory(
                 name: 'Gallery'
                 icon: 'picture-o'
                 query: null
-                module: 'gallary'
+                module: 'gallery'
             }, {
                 name: 'Invoice'
                 icon: 'book'
@@ -38,7 +38,7 @@ m.factory(
                 module: 'messages'
             }
         ]
-        THEMES =
+        THEMES:
             'Light': 'bg-light'
             'Dark': 'bg-dark'
             'Night': 'bg-black'
