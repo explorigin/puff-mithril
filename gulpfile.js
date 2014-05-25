@@ -11,29 +11,18 @@ var gulp = require('gulp'),
     csso = require('gulp-csso'),
 
     paths = {
-        html: ['app/**/*.html'],
         distHtml: ['build/*.html'],
-        images: ['app/**/*.{gif,jpg,png}'],
         distImages: ['build/**/*.{gif,jpg,png}'],
         coffee: ['app/**/*.coffee'],
-        copyables: ['app/**/*.{js, woff, map}', '!app/**/*.min.js'],
-        stylus: ['app/**/*.styl', '!app/bower_components/**/*.styl'],
-        css: ['app/**/*.css']
+        copyables: ['app/**/*.{html,js,woff,map,gif,jpg,png,css}', '!app/**/*.min.{css,js}'],
+        stylus: ['app/**/*.styl', '!app/bower_components/**/*.styl']
     };
 
-
-gulp.task('css', function() {
-    return gulp.src(paths.css).pipe(gulp.dest('build'));
-});
 
 gulp.task('stylus', function() {
     return gulp.src(paths.stylus)
         .pipe(stylus({errors: true}))
         .pipe(gulp.dest('build'));
-});
-
-gulp.task('copyables', function() {
-    return gulp.src(paths.copyables).pipe(gulp.dest('build'));
 });
 
 gulp.task('coffeescript', function() {
@@ -42,19 +31,16 @@ gulp.task('coffeescript', function() {
         .pipe(gulp.dest('build'));
 });
 
+gulp.task('copyables', function() {
+    return gulp.src(paths.copyables).pipe(gulp.dest('build'));
+});
+
 gulp.task('scripts', ['coffeescript', 'copyables']);
-gulp.task('styles', ['stylus', 'css']);
+gulp.task('styles', ['stylus', 'copyables']);
 
-gulp.task('html', function() {
-    return gulp.src(paths.html).pipe(gulp.dest('build'));
-});
-
-gulp.task('images', function() {
-    return gulp.src(paths.images).pipe(gulp.dest('build'));
-});
 
 // Concat and minify for distribution
-gulp.task('dist-styles', ['styles'], function() {
+gulp.task('dist-styles', ['copyables'], function() {
     return gulp.src(paths.distHtml)
         .pipe(assets({js: false, css: true}))
         .pipe(concat('all.css'))
@@ -62,7 +48,7 @@ gulp.task('dist-styles', ['styles'], function() {
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task('dist-scripts', ['scripts'], function() {
+gulp.task('dist-scripts', ['copyables'], function() {
     return gulp.src(paths.distHtml)
         .pipe(assets({js: true, css: false}))
         .pipe(concat('all.js'))
@@ -70,11 +56,11 @@ gulp.task('dist-scripts', ['scripts'], function() {
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task('dist-images', ['images'], function() {
+gulp.task('dist-images', ['copyables'], function() {
     return gulp.src(paths.distImages).pipe(gulp.dest('dist'));
 });
 
-gulp.task('dist-html', ['html'], function() {
+gulp.task('dist-html', ['copyables'], function() {
     return gulp.src(paths.distHtml)
         .pipe(htmlreplace({
             js: 'all.js',
@@ -103,15 +89,15 @@ gulp.task('watch', ['build'], function() {
         console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
     };
 
-    gulp.watch([paths.copyables, paths.coffee], ['scripts'])
+    gulp.watch([paths.coffee], ['scripts'])
         .on('change', logIt);
-    gulp.watch([paths.stylus, paths.css], ['styles'])
+    gulp.watch([paths.copyables], ['copyables'])
         .on('change', logIt);
-    gulp.watch([paths.html], ['html'])
+    gulp.watch([paths.stylus], ['styles'])
         .on('change', logIt);
 });
 
-gulp.task('build', ['styles', 'scripts', 'images', 'html']);
+gulp.task('build', ['styles', 'scripts', 'copyables']);
 gulp.task('dist', [
     'build',
     'dist-scripts',
