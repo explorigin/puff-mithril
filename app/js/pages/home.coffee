@@ -66,7 +66,7 @@ m.factory(
                             ])
                         ]
                     )
-                    m('main#content.'+cfg.THEMES[ctrl.theme()])
+                    m('main#content')
                 ])
             ]
 )

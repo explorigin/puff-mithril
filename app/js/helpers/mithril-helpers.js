@@ -20,4 +20,14 @@
     m.toggle = function(prop) {
         return function(evt) { prop(!prop()); };
     };
+
+    m.debubble = function(evtHandler) {
+        return function(evt) {
+            evt.stopPropagation();
+            evt.preventDefault();
+            m.startComputation();
+            try { return evtHandler.apply(this, arguments); }
+            finally { m.endComputation(); }
+        };
+    };
 })(Mithril);
