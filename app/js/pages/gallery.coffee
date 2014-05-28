@@ -2,15 +2,13 @@ m.factory(
     'pages.gallery',
     [
         'application.config'
-        'helpers.storage'
+        'helpers.progressbar'
         'helpers.icon'
     ]
-    (cfg, Storage, Icon) ->
-        storage = new Storage()
-
+    (cfg, ProgressBar, Icon) ->
         controller: () ->
             self = @
-            @mode = m.prop('gallery')
+            @mode = m.prop('draghover')
             @images = images = m.prop([])
 
             @progressMax = m.prop(0)
@@ -82,8 +80,8 @@ m.factory(
                     m('h1.animated.fadeInDown', [Icon('cloud-download')])
                     m('h2', ['Drop pictures here to upload'])
                 ])
-                import: m('.col-md-offset-3.col-md-6.text-center', [
-                    m('progress.progress.progress-striped.active', {max: ctrl.progressMax(), value: ctrl.progress()})
+                import: m('.slate.col-md-offset-3.col-md-6.text-center', [
+                    ProgressBar(ctrl.progress(), ctrl.progressMax())
                     m('h2', ['Uploading pictures...'])
                 ])
             m(
