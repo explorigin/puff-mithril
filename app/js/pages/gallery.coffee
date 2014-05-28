@@ -78,7 +78,7 @@ m.factory(
 
             modes =
                 gallery: ctrl.images().map(buildImage)
-                draghover: m('.col-md-offset-3.col-md-6.text-center', [
+                draghover: m('.slate.col-md-offset-3.col-md-6.text-center', [
                     m('h1.animated.fadeInDown', [Icon('cloud-download')])
                     m('h2', ['Drop pictures here to upload'])
                 ])
