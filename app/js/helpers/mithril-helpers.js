@@ -21,6 +21,21 @@
         return function(evt) { prop(!prop()); };
     };
 
+    m.cachedComputed = function(compute) {
+        var store = compute();
+        var prop = function() {
+            return store
+        }
+        prop.refresh = function() {
+            store = compute();
+            return store
+        }
+        prop.toJSON = function() {
+            return store
+        }
+        return prop
+    }
+
     m.debubble = function(evtHandler) {
         return function(evt) {
             evt.stopPropagation();

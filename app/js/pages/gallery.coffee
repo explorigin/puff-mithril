@@ -4,18 +4,86 @@ m.factory(
         'application.config'
         'helpers.progressbar'
         'helpers.icon'
+        'helpers.photo-utils'
     ]
-    (cfg, ProgressBar, Icon) ->
+    (cfg, ProgressBar, Icon, PhotoUtils) ->
         controller: () ->
-            self = @
-            @mode = m.prop('draghover')
-            @images = images = m.prop([])
+            window.s = self = @
+            containerEl = document.getElementById('content')
 
+            @mode = m.prop('draghover')
+            @images = m.prop([])
+
+
+            # Image sizing properties
+            @viewPort =
+                width: m.cachedComputed(
+                    ->
+                        containerEl.clientWidth - 16 # to account for a scrollbar
+                    )
+                height: m.cachedComputed(
+                    ->
+                        containerEl.clientHeight
+                    )
+
+            refreshDimensions = (evt) ->
+                self.viewPort.width.refresh()
+                self.viewPort.height.refresh()
+                m.redraw()
+
+            @resizeSubscription = window.addEventListener('resize', refreshDimensions)
+            @onunload = -> window.removeEventListener('resize', refreshDimensions)
+
+            @optimalImageHeight = -> Math.floor(self.viewPort.height() * 2/5)
+
+            @totalOptimalImageWidth = ->
+                optimalHeight = @optimalImageHeight()
+                @images().reduce(
+                    (sum, i) ->
+                        sum + i.aspectRatio * optimalHeight
+                    0
+                )
+
+            @rowCount = ->
+                Math.ceil(@totalOptimalImageWidth() / @viewPort.width())
+
+            @positionWeights = ->
+                @images().map(
+                    (i) ->
+                        Math.round(i.aspectRatio)
+                )
+
+            @partitions = ->
+                partition(@positionWeights(), @rowCount())
+
+            @resizeImages = ->
+                index = 0
+                for row in @partitions()
+                    console.log('row = ' + row)
+                    summedAspectRatios = row.reduce(((sum, ar) -> sum + ar), 0)
+                    console.log('summedAspectRatios = ' + summedAspectRatios)
+                    modifiedWidth = @viewPort.width() / summedAspectRatios
+                    for img_index in [index..row.length + index - 1]
+                        img = @images()[img_index]
+                        console.log("index: #{img_index}, aspectRatio: #{img.aspectRatio}")
+                        img.small_src = PhotoUtils.resize(
+                            img.big_src
+                            Math.floor(modifiedWidth)
+                            Math.floor(modifiedWidth * img.aspectRatio)
+                        )
+                        #console.log(Math.floor(modifiedWidth * img.aspectRatio) + " x " + Math.floor(modifiedWidth))
+
+                    index += row.length
+
+
+            # Progress Bar properties
             @progressMax = m.prop(0)
             @progressList = m.prop([])
             @progress = =>
                 @progressList().reduce(((sum, x) -> sum + (x or 0)), 0)
 
+
+            # Drag & Drop functions
             @dragDrop = (evt) ->
                 # Initialize our progress bar.
                 self.progressMax(0)
@@ -40,14 +108,20 @@ m.factory(
 
                     imgOnload = (img_evt) ->
                         img = img_evt.target
+
+                        small_img = PhotoUtils.resize(img, 1000, self.optimalImageHeight())
+
                         self.images().push(
-                            src: img.src
-                            aspectRatio: img.width / img.height
-                            width: 500
+                            small_src: small_img
+                            big_src: img
+                            aspectRatio: small_img.width / small_img.height
+                            mimetype: 'image/jpeg'
+                            quality: 0.7
                         )
 
                         if self.progress() == self.progressMax()
                             self.mode('gallery')
+                        self.resizeImages()
                         m.redraw()
 
                     reader = new FileReader()
@@ -72,7 +146,12 @@ m.factory(
 
         view: (ctrl) ->
             buildImage = (img) ->
-                m('img', img)
+                m(
+                    'img'
+                    {
+                        src: img.small_src.src
+                    }
+                )
 
             modes =
                 gallery: ctrl.images().map(buildImage)
