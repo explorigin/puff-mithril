@@ -4,9 +4,8 @@ m.factory(
     ->
         (progress, max) ->
             pctProgress = progress / max * 100
-
-            m(
-                '.progress.progress-striped.active'
+            return m(
+                '.progress'
                 [
                     m(
                         '.progress-bar'
