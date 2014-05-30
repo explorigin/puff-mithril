@@ -13,6 +13,7 @@ m.factory(
 
             @mode = m.prop('draghover')
             @images = m.prop([])
+            @optimalImageHeightRatio = m.prop(3/10)
 
 
             # Image sizing properties
@@ -29,12 +30,13 @@ m.factory(
             refreshDimensions = (evt) ->
                 self.viewPort.width.refresh()
                 self.viewPort.height.refresh()
+                self.resizeImages()
                 m.redraw()
 
             @resizeSubscription = window.addEventListener('resize', refreshDimensions)
             @onunload = -> window.removeEventListener('resize', refreshDimensions)
 
-            @optimalImageHeight = -> Math.floor(self.viewPort.height() * 2/5)
+            @optimalImageHeight = -> Math.round(self.viewPort.height() * @optimalImageHeightRatio())
 
             @totalOptimalImageWidth = ->
                 optimalHeight = @optimalImageHeight()
@@ -56,24 +58,41 @@ m.factory(
             @partitions = ->
                 partition(@positionWeights(), @rowCount())
 
+            resizeImageLock = false
             @resizeImages = ->
-                index = 0
-                for row in @partitions()
-                    console.log('row = ' + row)
-                    summedAspectRatios = row.reduce(((sum, ar) -> sum + ar), 0)
-                    console.log('summedAspectRatios = ' + summedAspectRatios)
-                    modifiedWidth = @viewPort.width() / summedAspectRatios
-                    for img_index in [index..row.length + index - 1]
-                        img = @images()[img_index]
-                        console.log("index: #{img_index}, aspectRatio: #{img.aspectRatio}")
+                if resizeImageLock is true
+                    return
+                resizeImageLock = true
+
+                rows = @partitions()
+                if rows.length < 0
+                    for img in @images()
                         img.small_src = PhotoUtils.resize(
                             img.big_src
-                            Math.floor(modifiedWidth)
-                            Math.floor(modifiedWidth * img.aspectRatio)
+                            Math.floor(@optimalImageHeight() * img.aspectRatio)
+                            Math.floor(@optimalImageHeight())
                         )
-                        #console.log(Math.floor(modifiedWidth * img.aspectRatio) + " x " + Math.floor(modifiedWidth))
+                else
+                    index = 0
+                    for row in rows
+                        # Linear partition will inject empty rows to complete the mathmatic equation.  Here we just ignore those rows.
+                        break unless row.length > 0
 
-                    index += row.length
+                        summedAspectRatios = row.reduce(((sum, ar) -> sum + ar), 0)
+                        modifiedWidth = @viewPort.width() / summedAspectRatios
+                        endPoint = row.length - 1 + index
+                        for img_index in [index..endPoint]
+                            img = @images()[img_index]
+                            img.small_src = PhotoUtils.resize(
+                                img.big_src
+                                Math.floor(modifiedWidth)
+                                Math.floor(modifiedWidth * img.aspectRatio)
+                            )
+
+                        index += row.length
+
+                setTimeout(m.redraw, 0)
+                resizeImageLock = false
 
 
             # Progress Bar properties
@@ -122,7 +141,6 @@ m.factory(
                         if self.progress() == self.progressMax()
                             self.mode('gallery')
                         self.resizeImages()
-                        m.redraw()
 
                     reader = new FileReader()
                     reader.onloadstart = fileOnloadStart
