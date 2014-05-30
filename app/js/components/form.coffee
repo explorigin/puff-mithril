@@ -29,5 +29,5 @@ m.factory(
                     )
                     oldSubmit(evt, data)
 
-            m('form', m.omit(options, 'elements'), options.elements.map(dispatcher))
+            m('form', _.omit(options, 'elements'), options.elements.map(dispatcher))
 )

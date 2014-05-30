@@ -11,5 +11,5 @@ m.factory(
                 else
                     text = [Icon(options.icon.type, 'orientation'), ' '+text]
 
-            m('button.btn.btn-default', m.omit(options, 'text', 'icon'), text)
+            m('button.btn.btn-default', _.omit(options, 'text', 'icon'), text)
 )

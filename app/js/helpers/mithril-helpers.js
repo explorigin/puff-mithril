@@ -7,16 +7,6 @@
         return option[0](option[1]);
     };
 
-    m.omit = function(obj) {
-        var copy = {},
-            ArrayProto = Array.prototype,
-            keys = ArrayProto.concat.apply(ArrayProto, ArrayProto.slice.call(arguments, 1));
-        for (var key in obj) {
-          if (keys.indexOf(key) === -1) copy[key] = obj[key];
-        }
-        return copy;
-    };
-
     m.toggle = function(prop) {
         return function(evt) { prop(!prop()); };
     };
