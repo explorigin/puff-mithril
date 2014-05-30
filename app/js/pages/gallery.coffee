@@ -7,6 +7,9 @@ m.factory(
         'helpers.photo-utils'
     ]
     (cfg, ProgressBar, Icon, PhotoUtils) ->
+        scrollBarWidth = PhotoUtils.scrollBarWidth()
+        borderSize = 4
+
         controller: () ->
             window.s = self = @
             containerEl = document.getElementById('content')
@@ -20,7 +23,7 @@ m.factory(
             @viewPort =
                 width: m.cachedComputed(
                     ->
-                        containerEl.clientWidth - 16 # to account for a scrollbar
+                        containerEl.clientWidth - scrollBarWidth
                     )
                 height: m.cachedComputed(
                     ->
@@ -85,8 +88,8 @@ m.factory(
                             img = @images()[img_index]
                             img.small_src = PhotoUtils.resize(
                                 img.big_src
-                                Math.floor(modifiedWidth)
-                                Math.floor(modifiedWidth * img.aspectRatio)
+                                Math.floor(modifiedWidth) - borderSize
+                                Math.floor(modifiedWidth * img.aspectRatio) - borderSize
                             )
 
                         index += row.length
@@ -164,10 +167,12 @@ m.factory(
 
         view: (ctrl) ->
             buildImage = (img) ->
+                small = img.small_src
                 m(
-                    'img'
+                    'div'
                     {
-                        src: img.small_src.src
+                        'class': 'image'
+                        style: "width: #{small.width}px; height: #{small.height}px; background-image: url(#{small.src})"
                     }
                 )
 
