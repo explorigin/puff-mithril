@@ -20,6 +20,10 @@
 
         prop.clear = function() {
             store = undefined;
+            if (d !== null) {
+                d.reject(new Error('Property cleared'));
+                d = null;
+            }
         };
         prop.refresh = function(async) {
             async = async === undefined ? false : async;
@@ -36,13 +40,14 @@
                 } else {
                     d = m.deferred();
                     setTimeout(function() {
+                        deferred = d
                         try {
-                            store = computed();
-                            d.resolve(store);
-                        } catch (e) {
-                            d.reject(e);
-                        } finally {
+                            store = compute();
                             d = null;
+                            deferred.resolve(store);
+                        } catch (e) {
+                            d = null;
+                            deferred.reject(e);
                         }
                     }, 0)
                     return d.promise;
