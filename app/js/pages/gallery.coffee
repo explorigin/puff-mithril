@@ -122,8 +122,16 @@ m.factory(
                         m.redraw()
 
                     fileOnload = (file_evt) ->
+                        # Check for duplicates
+                        img_hash = md5(file_evt.target.result)
+                        if img_hash in _.pluck(self.images(), 'hash')
+                            self.progressList()[@index] = file_evt.total
+                            if self.progress() == self.progressMax()
+                                self.mode('gallery')
+                            return
+
                         img = new Image()
-                        img.onload = imgOnload
+                        img.onload = imgOnload.bind(hash: img_hash)
                         img.src = file_evt.target.result
                         self.progressList()[@index] = file_evt.total
                         m.redraw()
@@ -139,6 +147,7 @@ m.factory(
                             aspectRatio: small_img.width / small_img.height
                             mimetype: 'image/jpeg'
                             quality: 0.7
+                            hash: @hash
                         )
 
                         if self.progress() == self.progressMax()
