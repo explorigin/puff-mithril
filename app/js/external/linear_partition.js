@@ -3,8 +3,8 @@
 
 // Partition seq into k buckets
 
-partition = (function() {
-    var partition = function (seq, k) {
+(function() {
+    partition = function (seq, k) {
 
         if (k === 0) return [];
         if (k === 1) return [seq];
@@ -98,6 +98,4 @@ partition = (function() {
 
         return conds;
     };
-
-    return partition;
 })();
