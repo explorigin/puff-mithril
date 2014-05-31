@@ -2,20 +2,21 @@ m.factory(
     'pages.gallery',
     [
         'application.config'
+        'components.gallery-image'
         'helpers.progressbar'
         'helpers.icon'
         'helpers.photo-utils'
     ]
-    (cfg, ProgressBar, Icon, PhotoUtils) ->
+    (cfg, GalleryImage, ProgressBar, Icon, PhotoUtils) ->
         scrollBarWidth = PhotoUtils.scrollBarWidth()
         borderSize = 4
 
         controller: () ->
-            window.s = self = @
+            window.s = self = @  # window.s for debugging
             containerEl = document.getElementById('content')
 
             @mode = m.prop('draghover')
-            @images = m.prop([])
+            @images = m.prop([])  # Array of Gallery Photo controllers
             @optimalImageHeightRatio = m.prop(3/10)
 
 
@@ -45,7 +46,7 @@ m.factory(
                 optimalHeight = @optimalImageHeight()
                 @images().reduce(
                     (sum, i) ->
-                        sum + i.aspectRatio * optimalHeight
+                        sum + i.aspectRatio() * optimalHeight
                     0
                 )
 
@@ -55,7 +56,7 @@ m.factory(
             @positionWeights = ->
                 @images().map(
                     (i) ->
-                        Math.round(i.aspectRatio)
+                        Math.round(i.aspectRatio())
                 )
 
             @partitions = ->
@@ -70,13 +71,15 @@ m.factory(
                 rows = @partitions()
                 if rows.length < 0
                     for img in @images()
-                        img.small_src = PhotoUtils.resize(
-                            img.big_src
-                            Math.floor(@optimalImageHeight() * img.aspectRatio)
-                            Math.floor(@optimalImageHeight())
-                        )
+                        img.width(Math.floor(@optimalImageHeight() * img.aspectRatio()))
+                        img.height(Math.floor(@optimalImageHeight()))
+                        img.small_img.clear()
+                        img.small_img.refresh()
+                        m.redraw()
+                        resizeImageLock = false
                 else
                     index = 0
+                    imgs = []
                     for row in rows
                         # Linear partition will inject empty rows to complete the mathmatic equation.  Here we just ignore those rows.
                         break unless row.length > 0
@@ -86,80 +89,47 @@ m.factory(
                         endPoint = row.length - 1 + index
                         for img_index in [index..endPoint]
                             img = @images()[img_index]
-                            img.small_src = PhotoUtils.resize(
-                                img.big_src
-                                Math.floor(modifiedWidth) - borderSize
-                                Math.floor(modifiedWidth * img.aspectRatio) - borderSize
-                            )
+                            ar = img.aspectRatio()
+                            img.width(Math.floor(modifiedWidth) - borderSize)
+                            img.height(Math.floor(modifiedWidth / ar) - borderSize)
+                            imgs.push(img)
 
                         index += row.length
-
-                setTimeout(m.redraw, 0)
-                resizeImageLock = false
-
-
-            # Progress Bar properties
-            @progressMax = m.prop(0)
-            @progressList = m.prop([])
-            @progress = =>
-                @progressList().reduce(((sum, x) -> sum + (x or 0)), 0)
-
+                    imgs = imgs.map(
+                        (i) ->
+                            i.small_img.clear()
+                            i.small_img.refresh('async')
+                    )
+                    m.sync(imgs).then(
+                        () ->
+                            m.redraw()
+                            resizeImageLock = false
+                        () ->
+                            console.log('fail')
+                    )
 
             # Drag & Drop functions
             @dragDrop = (evt) ->
-                # Initialize our progress bar.
-                self.progressMax(0)
-                self.progressList(new Array(evt.dataTransfer.files.length))
-                self.mode('import')
+                imgs = []
 
                 for file, i in evt.dataTransfer.files
-                    fileOnloadStart = (file_evt) ->
-                        self.progressMax(self.progressMax() + file_evt.total)
-                        m.redraw()
+                    img = new GalleryImage.controller()
+                    self.images().push(img)
+                    imgs.push(img.readAsDataURL(file))
 
-                    fileProgress = (file_evt) ->
-                        self.progressList()[@index] = file_evt.loaded
-                        m.redraw()
+                m.sync(imgs).then(
+                    () ->
+                        # Remove duplicate images
+                        images = self.images()
+                        imageHashes = images.map((img) -> img.md5())
+                        for img_index in [images.length-1..0]
+                            if imageHashes.indexOf(images[img_index].md5()) isnt img_index
+                                self.images().splice(img_index, 1)
 
-                    fileOnload = (file_evt) ->
-                        # Check for duplicates
-                        img_hash = md5(file_evt.target.result)
-                        if img_hash in _.pluck(self.images(), 'hash')
-                            self.progressList()[@index] = file_evt.total
-                            if self.progress() == self.progressMax()
-                                self.mode('gallery')
-                            return
-
-                        img = new Image()
-                        img.onload = imgOnload.bind(hash: img_hash)
-                        img.src = file_evt.target.result
-                        self.progressList()[@index] = file_evt.total
-                        m.redraw()
-
-                    imgOnload = (img_evt) ->
-                        img = img_evt.target
-
-                        small_img = PhotoUtils.resize(img, 1000, self.optimalImageHeight())
-
-                        self.images().push(
-                            small_src: small_img
-                            big_src: img
-                            aspectRatio: small_img.width / small_img.height
-                            mimetype: 'image/jpeg'
-                            quality: 0.7
-                            hash: @hash
-                        )
-
-                        if self.progress() == self.progressMax()
-                            self.mode('gallery')
                         self.resizeImages()
+                )
 
-                    reader = new FileReader()
-                    reader.onloadstart = fileOnloadStart
-                    reader.onprogress = fileProgress.bind(index: i)
-                    reader.onload = fileOnload.bind(index: i)
-                    reader.readAsDataURL(file)
-
+                self.mode('gallery')
                 return false
 
             @dragEnter = (evt) =>
@@ -175,25 +145,11 @@ m.factory(
             return @
 
         view: (ctrl) ->
-            buildImage = (img) ->
-                small = img.small_src
-                m(
-                    'div'
-                    {
-                        'class': 'image'
-                        style: "width: #{small.width}px; height: #{small.height}px; background-image: url(#{small.src})"
-                    }
-                )
-
             modes =
-                gallery: ctrl.images().map(buildImage)
+                gallery: ctrl.images().map(GalleryImage.view)
                 draghover: m('.slate.col-md-offset-3.col-md-6.text-center', [
                     m('h1.animated.fadeInDown', [Icon('cloud-download')])
                     m('h2', ['Drop pictures here to upload'])
-                ])
-                import: m('.slate.col-md-offset-3.col-md-6.text-center', [
-                    ProgressBar(ctrl.progress(), ctrl.progressMax())
-                    m('h2', ['Uploading pictures...'])
                 ])
             m(
                 '.gallery-canvas'
