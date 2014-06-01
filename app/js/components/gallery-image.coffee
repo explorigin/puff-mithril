@@ -8,6 +8,16 @@ m.factory(
         initialWidth = 400
         initialHeight = 300
 
+        screen =
+            width: m.cachedComputed(
+                ->
+                    window.screen.width
+                )
+            height: m.cachedComputed(
+                ->
+                    window.screen.height
+                )
+
         controller: () ->
             self = @
 
@@ -59,23 +69,19 @@ m.factory(
 
                 imgOnload = (evt) ->
                     img = evt.target
-                    self.img(img)
+                    self.img(PhotoUtils.resize(img, screen.width(), screen.height()))
 
                     self.md5.refresh()
                     self.width(Math.floor(initialWidth))
                     self.height(Math.floor(initialWidth / (img.width / img.height)))
                     self.small_img.clear()
-                    setTimeout(
+                    self.small_img.refresh('async').then(
                         () ->
-                            self.small_img.refresh('async').then(
-                                () ->
-                                    self.mode('ready')
-                                    m.redraw()
-                                    d.resolve(self)
-                                (err) ->
-                                    console.log(err)
-                            )
-                        50  # Add a delay so it doesn't block the UI so hard
+                            self.mode('ready')
+                            m.redraw()
+                            de = d
+                            d = null
+                            de.resolve(self)
                     )
 
                 reader = new FileReader()
