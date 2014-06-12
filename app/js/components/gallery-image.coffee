@@ -3,8 +3,9 @@ m.factory(
     'components.gallery-image'
     [
         'helpers.photo-utils'
+        'components.progressbar'
     ]
-    (PhotoUtils) ->
+    (PhotoUtils, ProgressBar) ->
         initialWidth = 400
         initialHeight = 300
 
@@ -23,8 +24,7 @@ m.factory(
 
             # State properties
             @mode = m.prop('loading')
-            @progress = m.prop(0)
-            @progressMax = m.prop(0)
+            @progressbar = new ProgressBar.controller()
 
             # Image properties
             @width = m.prop(initialWidth)
@@ -60,17 +60,7 @@ m.factory(
             @readAsDataURL = (file) ->
                 d = m.deferred()
 
-                readerOnloadStart = (evt) ->
-                    self.progressMax(evt.total)
-
-                    m.redraw()
-
-                readerProgress = (evt) ->
-                    self.progress(evt.loaded)
-                    m.redraw()
-
                 readerOnload = (evt) ->
-                    self.progress(evt.total)
                     img = new Image()
                     img.onload = imgOnload
                     img.src = evt.target.result
@@ -95,14 +85,16 @@ m.factory(
                     )
 
                 reader = new FileReader()
-                reader.onloadstart = readerOnloadStart
-                reader.onprogress = readerProgress
-                reader.onload = readerOnload
+                reader.onloadstart = self.progressbar.eventStart
+                reader.onprogress = self.progressbar.eventProgress
+                reader.onload = (evt) ->
+                    self.progressbar.eventFinish.apply(@, arguments)
+                    readerOnload.apply(@, arguments)
                 reader.readAsDataURL(file)
 
-                @mimetype(file.type)
-                @filename(file.name)
-                @lastModifiedDate(file.lastModifiedDate)
+                self.mimetype(file.type)
+                self.filename(file.name)
+                self.lastModifiedDate(file.lastModifiedDate)
 
                 return d.promise
 

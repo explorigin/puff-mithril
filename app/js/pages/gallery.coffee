@@ -3,11 +3,10 @@ m.factory(
     [
         'application.config'
         'components.gallery-image'
-        'helpers.progressbar'
         'helpers.icon'
         'helpers.photo-utils'
     ]
-    (cfg, GalleryImage, ProgressBar, Icon, PhotoUtils) ->
+    (cfg, GalleryImage, Icon, PhotoUtils) ->
         scrollBarWidth = PhotoUtils.scrollBarWidth()
         borderSize = 4
 
