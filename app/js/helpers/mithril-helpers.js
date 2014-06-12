@@ -39,18 +39,17 @@
                     return d.promise;
                 } else {
                     d = m.deferred();
-                    args = Array.prototype.slice.call(arguments, 1)
                     setTimeout(function() {
                         deferred = d
                         try {
-                            store = compute.apply(this, args);
+                            store = compute.apply(self, this.args);
                             d = null;
                             deferred.resolve(store);
                         } catch (e) {
                             d = null;
                             deferred.reject(e);
                         }
-                    }, 0)
+                    }.bind({args: Array.prototype.slice.call(arguments, 1)}), 0)
                     return d.promise;
                 }
             }

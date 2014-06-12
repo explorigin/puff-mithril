@@ -9,6 +9,7 @@ m.factory(
     (cfg, GalleryImage, Icon, PhotoUtils) ->
         scrollBarWidth = PhotoUtils.scrollBarWidth()
         borderSize = 4
+        UI_DELAY = 100
 
         controller: () ->
             window.s = self = @  # window.s for debugging
@@ -16,7 +17,8 @@ m.factory(
 
             @mode = m.prop('draghover')
             @images = m.prop([])  # Array of Gallery Photo controllers
-            @optimalImageHeightRatio = m.prop(3/10)
+            @optimalImageHeightRatio = m.prop(3/8)
+            @files = m.prop([])  # Incoming files
 
 
             # Image sizing properties
@@ -55,79 +57,91 @@ m.factory(
             @positionWeights = ->
                 @images().map(
                     (i) ->
-                        Math.round(i.aspectRatio())
+                        Math.round(i.aspectRatio() * 100)
                 )
 
             @partitions = ->
                 partition(@positionWeights(), @rowCount())
 
-            resizeImageLock = false
+            resizeImageLock = null
             @resizeImages = ->
-                if resizeImageLock is true
-                    return
-                resizeImageLock = true
+                if resizeImageLock isnt null
+                    return resizeImageLock.promise
+                resizeImageLock = m.deferred()
 
                 rows = @partitions()
-                if rows.length < 0
-                    for img in @images()
-                        img.width(Math.floor(@optimalImageHeight() * img.aspectRatio()))
-                        img.height(Math.floor(@optimalImageHeight()))
-                        img.small_img.clear()
-                        img.small_img.refresh()
-                        m.redraw()
-                        resizeImageLock = false
-                else
-                    index = 0
-                    imgs = []
-                    for row in rows
-                        # Linear partition will inject empty rows to complete the mathmatic equation.  Here we just ignore those rows.
-                        break unless row.length > 0
+                promises = []
+                # if rows.length < 2
+                #     for img in @images()
+                #         max_width = Math.floor(@optimalImageHeight() * img.aspectRatio())
+                #         max_height = Math.floor(@optimalImageHeight())
+                #         promises.push(img.small_img.refresh('async', max_width, max_height))
+                # else
+                index = 0
+                for row in rows
+                    # Linear partition will inject empty rows to complete the mathmatic equation.  Here we just ignore those rows.
+                    break unless row.length > 0
 
-                        summedAspectRatios = row.reduce(((sum, ar) -> sum + ar), 0)
-                        modifiedWidth = @viewPort.width() / summedAspectRatios
-                        endPoint = row.length - 1 + index
-                        for img_index in [index..endPoint]
-                            img = @images()[img_index]
-                            ar = img.aspectRatio()
-                            img.width(Math.floor(modifiedWidth) - borderSize)
-                            img.height(Math.floor(modifiedWidth / ar) - borderSize)
-                            imgs.push(img)
+                    summedAspectRatios = row.reduce(((sum, ar) -> sum + ar), 0)
+                    modifiedWidth = @viewPort.width() / summedAspectRatios * 100
+                    endPoint = row.length - 1 + index
+                    for img_index in [index..endPoint]
+                        img = @images()[img_index]
+                        ar = img.aspectRatio()
+                        max_width = Math.floor((modifiedWidth - borderSize) * ar)
+                        max_height = Math.floor(modifiedWidth) - borderSize
+                        promises.push(img.small_img.refresh('async', max_width, max_height))
 
-                        index += row.length
-                    imgs = imgs.map(
-                        (i) ->
-                            i.small_img.clear()
-                            i.small_img.refresh('async')
-                    )
-                    m.sync(imgs).then(
-                        () ->
-                            m.redraw()
-                            resizeImageLock = false
-                        () ->
-                            console.log('fail')
-                    )
+                    index += row.length
 
-            # Drag & Drop functions
-            @dragDrop = (evt) ->
-                imgs = []
-
-                for file, i in evt.dataTransfer.files
-                    img = new GalleryImage.controller()
-                    self.images().push(img)
-                    imgs.push(img.readAsDataURL(file))
-
-                m.sync(imgs).then(
+                m.sync(promises).then(
                     () ->
-                        # Remove duplicate images
-                        images = self.images()
-                        imageHashes = images.map((img) -> img.md5())
-                        for img_index in [images.length-1..0]
-                            if imageHashes.indexOf(images[img_index].md5()) isnt img_index
-                                self.images().splice(img_index, 1)
-
-                        self.resizeImages()
+                        m.redraw()
+                        r = resizeImageLock
+                        resizeImageLock = null
+                        r.resolve(promises.length)
+                    (err) ->
+                        console.log(err)
+                        r = resizeImageLock
+                        resizeImageLock = null
+                        r.reject(err)
                 )
 
+                return resizeImageLock.promise
+
+            # Drag & Drop functions
+            @importNextFile = ->
+                # Read the top file.
+                return unless file = self.files().shift()
+
+                img = new GalleryImage.controller()
+                img.readAsDataURL(file).then(
+                    (img) ->
+                        # Grab the md5 precomputed hashes of the existing images
+                        imageHashes = _.pluck(self.images(), 'md5').map((md5) -> md5())
+                        # If the image is not already in the group, then add it and resize all the images.
+                        if img.md5() not in imageHashes
+                            self.images().push(img)
+                            return self.resizeImages()
+                    (err) ->
+                        console.log(err)
+                        setTimeout(self.importNextFile, UI_DELAY)
+                ).then(
+                    (added) ->
+                        m.redraw()
+                        setTimeout(self.importNextFile, UI_DELAY) unless added is 0
+                    (err) ->
+                        console.log(err)
+                        setTimeout(self.importNextFile, UI_DELAY)
+                )
+
+            @dragDrop = (evt) ->
+                # Filter for just our image files
+                self.files(_.filter(evt.dataTransfer.files, (f) -> f.type.indexOf('image/') is 0))
+                # Give a delay for the UI to update between image loads.
+                setTimeout(self.importNextFile, UI_DELAY)
+
+                # We're finished dropping, go back to gallery mode to display images as they come in.
                 self.mode('gallery')
                 return false
 
