@@ -33,10 +33,14 @@ m.factory(
                     )
 
             refreshDimensions = (evt) ->
-                self.viewPort.width.refresh()
-                self.viewPort.height.refresh()
-                self.resizeImages()
-                m.redraw()
+                setTimeout(
+                    ->
+                        self.viewPort.width.refresh()
+                        self.viewPort.height.refresh()
+                        self.resizeImages()
+                        m.redraw()
+                    0
+                )
 
             @resizeSubscription = window.addEventListener('resize', refreshDimensions)
             @onunload = -> window.removeEventListener('resize', refreshDimensions)
@@ -165,7 +169,7 @@ m.factory(
                     m('h2', ['Drop pictures here to upload'])
                 ])
             m(
-                '.gallery-canvas'
+                '.gallery.app-canvas'
                 {
                     ondrop: m.debubble(ctrl.dragDrop)
                     ondragover: ctrl.dragOver

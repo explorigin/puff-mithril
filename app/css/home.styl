@@ -1,5 +1,6 @@
 navBarWidthWide = 125px
 navBarWidthNarrow = 80px
+navBarVerticalHeight = 50px
 
 a
     text-decoration: none
@@ -16,6 +17,8 @@ a
     padding: 0 !important
 
 #nav
+    z-index: 1000
+
     .nav-brand
         text-align: center
 
@@ -35,7 +38,7 @@ a
 
     .nav-brand
         font-size: 25px
-        line-height: 50px
+        line-height: navBarVerticalHeight
         display: block
 
         &:hover
@@ -62,6 +65,11 @@ a
     li a i
         margin-right: 0.5em
         font-size: 14px
+
+.app-canvas
+    width: 100%
+    height: 100%
+    overflow-y: scroll
 
 @media (min-width: 768px)
     .aside-md
@@ -91,7 +99,7 @@ a
         width: 100%
 
         & > .app-menu
-            top: 50px
+            top: navBarVerticalHeight
             bottom: 50px
 
         & > section, & > footer
@@ -104,7 +112,6 @@ a
             top: auto
 
     #nav
-        z-index: 1000
         -webkit-transition: width .25s
         transition: width .25s
         -webkit-backface-visibility: hidden
@@ -152,3 +159,10 @@ a
 
         .nav-primary
             display: block !important
+
+    #content
+        position: absolute
+        top: navBarVerticalHeight
+        right: 0
+        bottom: 0
+        left: 0

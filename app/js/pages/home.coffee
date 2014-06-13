@@ -24,6 +24,18 @@ m.factory(
             @verticalNav = m.prop(false)
             @showOffScreen = m.prop(false)
 
+            @closeOffScreen = =>
+                @showOffScreen(false)
+                return true
+
+            @toggleVerticalNav = =>
+                @verticalNav(not @verticalNav())
+
+                # trigger the window resize event so other parts of the page know to check for changes.
+                evt = document.createEvent('UIEvents')
+                evt.initUIEvent('resize', true, false, window, 0)
+                window.dispatchEvent(evt)
+
             return @
 
         view: (ctrl) ->
@@ -53,14 +65,17 @@ m.factory(
                                                     {
                                                         'class': (if m.route() is app.module then 'active' else '')
                                                     }
-                                                    [m("a[href=##{app.module}]", [Icon(app.icon), m('span', [app.name])])]
+                                                    [m(
+                                                        "a[href=##{app.module}]"
+                                                        onclick: ctrl.closeOffScreen
+                                                        [Icon(app.icon), m('span', [app.name])])]
                                                 )
                                             )
                                         )
                                     ])
                                 ])
                                 m('footer.hidden-xs', [
-                                    m('a.btn.btn-link', {onclick: m.toggle(ctrl.verticalNav)}, [Icon('bars')])
+                                    m('a.btn.btn-link', {onclick: ctrl.toggleVerticalNav}, [Icon('bars')])
                                     m('a.btn.btn-link.pull-right', {href: cfg.pages.login}, [Icon('power-off')])
                                 ])
                             ])
