@@ -1,3 +1,5 @@
+@import 'functions'
+
 navBarWidthWide = 125px
 navBarWidthNarrow = 80px
 navBarVerticalHeight = 50px
@@ -23,6 +25,7 @@ a
         text-align: center
 
 .nav-bar
+    vendor(transition, opacity .5s)
     position: relative
 
     & > .btn
