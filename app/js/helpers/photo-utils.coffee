@@ -49,9 +49,6 @@ m.factory(
                     width *= max_height / height
                     height = max_height
 
-            width = Math.floor(width)
-            height = Math.floor(height)
-
             c.width = width
             c.height = height
             context.drawImage(img, 0, 0, width, height)

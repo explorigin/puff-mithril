@@ -45,7 +45,7 @@ m.factory(
             @resizeSubscription = window.addEventListener('resize', refreshDimensions)
             @onunload = -> window.removeEventListener('resize', refreshDimensions)
 
-            @optimalImageHeight = -> Math.round(self.viewPort.height() * @optimalImageHeightRatio())
+            @optimalImageHeight = -> self.viewPort.height() * @optimalImageHeightRatio()
 
             @totalOptimalImageWidth = ->
                 optimalHeight = @optimalImageHeight()
@@ -61,7 +61,7 @@ m.factory(
             @positionWeights = ->
                 @images().map(
                     (i) ->
-                        Math.round(i.aspectRatio() * 100)
+                        i.aspectRatio() * 100
                 )
 
             @partitions = ->
@@ -86,8 +86,8 @@ m.factory(
                     for img_index in [index..endPoint]
                         img = @images()[img_index]
                         ar = img.aspectRatio()
-                        max_width = Math.floor((modifiedWidth - borderSize) * ar)
-                        max_height = Math.floor(modifiedWidth) - borderSize
+                        max_width = (modifiedWidth - borderSize) * ar
+                        max_height = modifiedWidth - borderSize
                         promises.push(img.small_img.refresh('async', max_width, max_height))
 
                     index += row.length
