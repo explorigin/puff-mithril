@@ -9,6 +9,6 @@ m.factory(
             when "bootstrap" then icon = "span.glyphicon.glyphicon-"
             when "fontawesome" then icon = "i.fa.fa-"
 
-        (type) ->
-            return m(icon + type)
+        (type, options) ->
+            return m(icon + type, options or {})
 )
