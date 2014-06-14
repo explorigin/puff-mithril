@@ -15,6 +15,8 @@ m.factory(
             window.s = self = @  # window.s for debugging
             containerEl = document.getElementById('content')
 
+            @modeChangeTimeout = m.prop()
+
             @mode = m.prop('draghover')
             @images = m.prop([])  # Array of Gallery Photo controllers
             @optimalImageHeightRatio = m.prop(3/8)
@@ -23,14 +25,8 @@ m.factory(
 
             # Image sizing properties
             @viewPort =
-                width: m.cachedComputed(
-                    ->
-                        containerEl.clientWidth - scrollBarWidth
-                    )
-                height: m.cachedComputed(
-                    ->
-                        containerEl.clientHeight
-                    )
+                width: m.cachedComputed(-> containerEl.clientWidth - scrollBarWidth)
+                height: m.cachedComputed(-> containerEl.clientHeight)
 
             refreshDimensions = (evt) ->
                 setTimeout(
@@ -50,8 +46,7 @@ m.factory(
             @totalOptimalImageWidth = ->
                 optimalHeight = @optimalImageHeight()
                 @images().reduce(
-                    (sum, i) ->
-                        sum + i.aspectRatio() * optimalHeight
+                    (sum, i) -> sum + i.aspectRatio() * optimalHeight
                     0
                 )
 
@@ -59,10 +54,7 @@ m.factory(
                 Math.ceil(@totalOptimalImageWidth() / @viewPort.width())
 
             @positionWeights = ->
-                @images().map(
-                    (i) ->
-                        i.aspectRatio() * 100
-                )
+                @images().map((i) -> i.aspectRatio() * 100)
 
             @partitions = ->
                 partition(@positionWeights(), @rowCount())
@@ -71,6 +63,7 @@ m.factory(
             @resizeImages = ->
                 if resizeImageLock isnt null
                     return resizeImageLock.promise
+
                 resizeImageLock = m.deferred()
 
                 rows = @partitions()
@@ -140,14 +133,22 @@ m.factory(
                 setTimeout(self.importNextFile, UI_DELAY)
 
                 # We're finished dropping, go back to gallery mode to display images as they come in.
-                self.mode('gallery')
+                self.mode('album')
                 return false
 
-            @dragEnter = (evt) =>
-                @mode('draghover')
+            @dragEnter = (evt) ->
+                self.mode('draghover')
+                if self.modeChangeTimeout()
+                    clearTimeout(self.modeChangeTimeout())
+                    self.modeChangeTimeout(null)
 
-            @dragLeave = (evt) =>
-                @mode('gallery')
+            @dragLeave = (evt) ->
+                self.modeChangeTimeout(
+                    setTimeout(
+                        -> self.mode('album')
+                        100
+                    )
+                )
 
             @dragOver = (evt) =>
                 # This is needed to tell the browser that the element can accept a drop.
@@ -156,20 +157,30 @@ m.factory(
             return @
 
         view: (ctrl) ->
-            modes =
-                gallery: ctrl.images().map(GalleryImage.view)
-                draghover: m('.slate.col-md-offset-3.col-md-6.text-center', [
-                    m('h1.animated.fadeInDown', [Icon('cloud-download')])
-                    m('h2', ['Drop pictures here to upload'])
-                ])
             m(
                 '.gallery.app-canvas'
-                {
-                    ondrop: m.debubble(ctrl.dragDrop)
-                    ondragover: ctrl.dragOver
-                    ondragenter: m.debubble(ctrl.dragEnter)
-                    ondragleave: m.debubble(ctrl.dragLeave)
-                }
-                modes[ctrl.mode()]
+                [
+                    m(
+                        '.dropzone.pane'
+                        'class': ctrl.mode()
+                        ondrop: m.debubble(ctrl.dragDrop)
+                        ondragover: ctrl.dragOver
+                        ondragenter: m.debubble(ctrl.dragEnter)
+                        ondragleave: m.debubble(ctrl.dragLeave)
+                        m(
+                            '.slate.col-md-offset-3.col-md-6.text-center'
+                            [
+                                m('h1.animated.fadeInDown', [Icon('cloud-download')])
+                                m('h2', ['Drop pictures here to upload'])
+                            ]
+                        )
+                    )
+                    m(
+                        '.images.pane'
+                        'class': ctrl.mode()
+                        ondragenter: m.debubble(ctrl.dragEnter)
+                        ctrl.images().map(GalleryImage.view)
+                    )
+                ]
             )
 )

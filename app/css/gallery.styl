@@ -1,12 +1,26 @@
-.gallery
-    .image
-        float: left
-        position: relative
-        background-position: center center
-        background-size: 100% 100%
-        margin: 2px
+@import 'functions'
 
-    .progress-bar
-        /* Disable the transition animation because in the gallery, the progress bar is not responsive enough. */
-        -webkit-transition: none
-        transition: none
+.gallery
+    .pane
+        vendor(transition, opacity .25s)
+        opacity: 0
+        z-index: 0
+
+    .dropzone.draghover
+        opacity: 0.9
+        z-index: 1
+
+
+    .images
+        opacity: 0.2
+
+        &.album
+            opacity: 1
+            z-index: 1
+
+        .image
+            float: left
+            position: relative
+            background-position: center center
+            background-size: 100% 100%
+            margin: 2px
