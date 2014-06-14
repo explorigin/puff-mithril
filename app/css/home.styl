@@ -74,7 +74,21 @@ a
     height: 100%
     overflow-y: scroll
 
+#nav.nav-off-screen
+    position: absolute
+    left: 0
+    top: 0
+    bottom: 0
+    visibility: visible
+    overflow-x: hidden
+    overflow-y: auto
+    -webkit-overflow-scrolling: touch
+
+    .nav-primary
+        display: block !important
+
 @media (min-width: 768px)
+
     .aside-md
         width: navBarWidthWide
 
@@ -115,16 +129,31 @@ a
             top: auto
 
     #nav
-        -webkit-transition: width .25s
-        transition: width .25s
-        -webkit-backface-visibility: hidden
-        -moz-backface-visibility: hidden
-        backface-visibility: hidden
+        width: navBarWidthWide
+        vendor(transition, width .25s)
+        vendor(backface-visibility, hidden)
+
+        &.nav-off-screen
+            left: navBarWidthWide * -1
+            overflow: visible
+
+            .nav-bar
+                opacity: 0.4
+                left: navBarWidthWide
+
+                &:hover
+                    opacity: 0.9
 
         &.nav-vertical
             width: navBarWidthNarrow
 
-            .nav-brand
+            &.nav-off-screen
+                left: navBarWidthNarrow * -1
+
+                .nav-bar
+                    left: navBarWidthNarrow
+
+            .nav-bar
                 font-size: 20px
                 padding-left: 0
                 padding-right: 0
@@ -148,20 +177,13 @@ a
     #nav.nav-vertical + #content
         left: navBarWidthNarrow
 
+    #nav.nav-off-screen + #content
+        left: 0px
+
+
 @media (max-width: 767px)
     .nav-off-screen
-        position: absolute
-        left: 0
-        top: 0
-        bottom: 0
         width: 75%
-        visibility: visible
-        overflow-x: hidden
-        overflow-y: auto
-        -webkit-overflow-scrolling: touch
-
-        .nav-primary
-            display: block !important
 
     #content
         position: absolute

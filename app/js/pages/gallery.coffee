@@ -75,12 +75,6 @@ m.factory(
 
                 rows = @partitions()
                 promises = []
-                # if rows.length < 2
-                #     for img in @images()
-                #         max_width = Math.floor(@optimalImageHeight() * img.aspectRatio())
-                #         max_height = Math.floor(@optimalImageHeight())
-                #         promises.push(img.small_img.refresh('async', max_width, max_height))
-                # else
                 index = 0
                 for row in rows
                     # Linear partition will inject empty rows to complete the mathmatic equation.  Here we just ignore those rows.
