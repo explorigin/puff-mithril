@@ -2,7 +2,7 @@ m.factory(
     'pages.gallery',
     [
         'application.config'
-        'components.gallery-image'
+        'models.image'
         'helpers.icon'
         'helpers.photo-utils'
     ]
@@ -22,7 +22,6 @@ m.factory(
             @optimalImageHeightRatio = m.prop(3/8)
             @files = m.prop([])  # Incoming files
 
-
             # Image sizing properties
             @viewPort =
                 width: m.cachedComputed(-> containerEl.clientWidth - scrollBarWidth)
@@ -31,10 +30,10 @@ m.factory(
             refreshDimensions = (evt) ->
                 setTimeout(
                     ->
+                        m.startComputation()
                         self.viewPort.width.refresh()
                         self.viewPort.height.refresh()
-                        self.resizeImages()
-                        m.redraw()
+                        self.resizeImages().then(m.endComputation)
                     0
                 )
 
@@ -67,8 +66,8 @@ m.factory(
                 resizeImageLock = m.deferred()
 
                 rows = @partitions()
-                promises = []
                 index = 0
+                total = 0
                 for row in rows
                     # Linear partition will inject empty rows to complete the mathmatic equation.  Here we just ignore those rows.
                     break unless row.length > 0
@@ -81,31 +80,23 @@ m.factory(
                         ar = img.aspectRatio()
                         max_width = (modifiedWidth - borderSize) * ar
                         max_height = modifiedWidth - borderSize
-                        promises.push(img.small_img.refresh('async', max_width, max_height))
+                        img.small_img.refresh('async', max_width, max_height).then(m.redraw)
+                        total += 1
 
                     index += row.length
 
-                m.sync(promises).then(
-                    () ->
-                        m.redraw()
-                        r = resizeImageLock
-                        resizeImageLock = null
-                        r.resolve(promises.length)
-                    (err) ->
-                        console.log(err)
-                        r = resizeImageLock
-                        resizeImageLock = null
-                        r.reject(err)
-                )
+                r = resizeImageLock
+                resizeImageLock = null
+                r.resolve(total)
 
-                return resizeImageLock.promise
+                return r.promise
 
             # Drag & Drop functions
             @importNextFile = ->
                 # Read the top file.
                 return unless file = self.files().shift()
 
-                img = new GalleryImage.controller()
+                img = new GalleryImage()
                 img.readAsDataURL(file).then(
                     (img) ->
                         # Grab the md5 precomputed hashes of the existing images
@@ -157,6 +148,18 @@ m.factory(
             return @
 
         view: (ctrl) ->
+            imgTmpl = (img) ->
+                width = img.width()
+                height = img.height()
+                src = img.small_img().src
+                m(
+                    '.image'
+                    {
+                        style: "width: #{width}px; height: #{height}px; background-image: url(#{src})"
+                    }
+                )
+
+
             m(
                 '.gallery.app-canvas'
                 [
@@ -179,7 +182,7 @@ m.factory(
                         '.images.pane'
                         'class': ctrl.mode()
                         ondragenter: m.debubble(ctrl.dragEnter)
-                        ctrl.images().map(GalleryImage.view)
+                        ctrl.images().map(imgTmpl)
                     )
                 ]
             )
