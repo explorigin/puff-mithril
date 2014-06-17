@@ -9,38 +9,25 @@ m.factory(
     (cfg, GalleryImage, Icon, PhotoUtils) ->
         scrollBarWidth = PhotoUtils.scrollBarWidth()
         borderSize = 4
-        UI_DELAY = 100
+        UI_DELAY = 20
 
-        controller: () ->
-            window.s = self = @  # window.s for debugging
-            containerEl = document.getElementById('content')
+        containerEl = document.getElementById('content')
 
-            @modeChangeTimeout = m.prop()
+        viewPort =
+            width: m.cachedComputed(-> containerEl.clientWidth - scrollBarWidth)
+            height: m.cachedComputed(-> containerEl.clientHeight)
 
-            @mode = m.prop('draghover')
+        Gallery = ->
+            self = @
+            resizeImageLock = null
+
+            # Properties
             @images = m.prop([])  # Array of Gallery Photo controllers
             @optimalImageHeightRatio = m.prop(3/8)
             @files = m.prop([])  # Incoming files
 
-            # Image sizing properties
-            @viewPort =
-                width: m.cachedComputed(-> containerEl.clientWidth - scrollBarWidth)
-                height: m.cachedComputed(-> containerEl.clientHeight)
-
-            refreshDimensions = (evt) ->
-                setTimeout(
-                    ->
-                        m.startComputation()
-                        self.viewPort.width.refresh()
-                        self.viewPort.height.refresh()
-                        self.resizeImages().then(m.endComputation)
-                    0
-                )
-
-            @resizeSubscription = window.addEventListener('resize', refreshDimensions)
-            @onunload = -> window.removeEventListener('resize', refreshDimensions)
-
-            @optimalImageHeight = -> self.viewPort.height() * @optimalImageHeightRatio()
+            # Computed Properties
+            @optimalImageHeight = -> viewPort.height() * @optimalImageHeightRatio()
 
             @totalOptimalImageWidth = ->
                 optimalHeight = @optimalImageHeight()
@@ -49,16 +36,11 @@ m.factory(
                     0
                 )
 
-            @rowCount = ->
-                Math.ceil(@totalOptimalImageWidth() / @viewPort.width())
-
-            @positionWeights = ->
-                @images().map((i) -> i.aspectRatio() * 100)
-
             @partitions = ->
-                partition(@positionWeights(), @rowCount())
+                rowCount = Math.ceil(@totalOptimalImageWidth() / viewPort.width())
+                partition(@images().map((i) -> i.aspectRatio() * 100), rowCount)
 
-            resizeImageLock = null
+            # Methods
             @resizeImages = ->
                 if resizeImageLock isnt null
                     return resizeImageLock.promise
@@ -68,12 +50,13 @@ m.factory(
                 rows = @partitions()
                 index = 0
                 total = 0
+                vpWidth = viewPort.width() * 100
                 for row in rows
                     # Linear partition will inject empty rows to complete the mathmatic equation.  Here we just ignore those rows.
                     break unless row.length > 0
 
                     summedAspectRatios = row.reduce(((sum, ar) -> sum + ar), 0)
-                    modifiedWidth = @viewPort.width() / summedAspectRatios * 100
+                    modifiedWidth = vpWidth / summedAspectRatios
                     endPoint = row.length - 1 + index
                     for img_index in [index..endPoint]
                         img = @images()[img_index]
@@ -91,8 +74,7 @@ m.factory(
 
                 return r.promise
 
-            # Drag & Drop functions
-            @importNextFile = ->
+            importNextFile = ->
                 # Read the top file.
                 return unless file = self.files().shift()
 
@@ -107,21 +89,47 @@ m.factory(
                             return self.resizeImages()
                     (err) ->
                         console.log(err)
-                        setTimeout(self.importNextFile, UI_DELAY)
+                        setTimeout(importNextFile, UI_DELAY)
                 ).then(
                     (added) ->
                         m.redraw()
-                        setTimeout(self.importNextFile, UI_DELAY) unless added is 0
+                        setTimeout(importNextFile, UI_DELAY) unless added is 0
                     (err) ->
                         console.log(err)
-                        setTimeout(self.importNextFile, UI_DELAY)
+                        setTimeout(importNextFile, UI_DELAY)
                 )
 
-            @dragDrop = (evt) ->
+            @importFiles = (files) ->
                 # Filter for just our image files
-                self.files(_.filter(evt.dataTransfer.files, (f) -> f.type.indexOf('image/') is 0))
+                self.files(_.filter(files, (f) -> f.type.indexOf('image/') is 0))
                 # Give a delay for the UI to update between image loads.
-                setTimeout(self.importNextFile, UI_DELAY)
+                setTimeout(importNextFile, UI_DELAY)
+
+            return @
+
+        controller: () ->
+            window.s = self = @  # window.s for debugging
+
+            @gallery = m.prop(new Gallery())
+            @mode = m.prop('draghover')
+            @modeChangeTimeout = m.prop()
+
+            refreshDimensions = (evt) ->
+                # Defer refreshing the viewport dimensions so we know that the container has resized
+                setTimeout(
+                    ->
+                        m.startComputation()
+                        viewPort.width.refresh()
+                        viewPort.height.refresh()
+                        self.gallery().resizeImages().then(m.endComputation)
+                    0
+                )
+            @resizeSubscription = window.addEventListener('resize', refreshDimensions)
+            @onunload = -> window.removeEventListener('resize', refreshDimensions)
+
+
+            @dragDrop = (evt) ->
+                self.gallery().importFiles(evt.dataTransfer.files)
 
                 # We're finished dropping, go back to gallery mode to display images as they come in.
                 self.mode('album')
@@ -148,6 +156,7 @@ m.factory(
             return @
 
         view: (ctrl) ->
+            g = ctrl.gallery()
             imgTmpl = (img) ->
                 width = img.width()
                 height = img.height()
@@ -158,7 +167,6 @@ m.factory(
                         style: "width: #{width}px; height: #{height}px; background-image: url(#{src})"
                     }
                 )
-
 
             m(
                 '.gallery.app-canvas'
@@ -182,7 +190,7 @@ m.factory(
                         '.images.pane'
                         'class': ctrl.mode()
                         ondragenter: m.debubble(ctrl.dragEnter)
-                        ctrl.images().map(imgTmpl)
+                        g.images().map(imgTmpl)
                     )
                 ]
             )
