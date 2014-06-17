@@ -2,27 +2,28 @@
 m.factory(
     'components.progressbar'
     ->
+        UIprop = m.wrappedProp(m.startComputation, m.endComputation)
+
         controller: () ->
+            self = @
+
             # State properties
-            @progress = m.prop(0)
-            @progressMin = m.prop(0)
-            @progressMax = m.prop(0)
+            @progress = UIprop(0)
+            @progressMin = UIprop(0)
+            @progressMax = UIprop(1)
 
             # Methods
-            @pctProgress = =>
-                @progress() / @progressMax() * 100
+            @pctProgress = ->
+                self.progress() / self.progressMax() * 100
 
-            @eventStart = (evt) =>
-                @progressMax(evt.total)
-                m.redraw()
+            @eventStart = (evt) ->
+                self.progressMax(evt.total)
 
-            @eventProgress = (evt) =>
-                @progress(evt.loaded)
-                m.redraw()
+            @eventProgress = (evt) ->
+                self.progress(evt.loaded)
 
-            @eventFinish = (evt) =>
-                @progress(evt.total)
-                m.redraw()
+            @eventFinish = (evt) ->
+                self.progress(evt.total)
 
             return @
 
