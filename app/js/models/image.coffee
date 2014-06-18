@@ -64,20 +64,20 @@ m.factory(
                     img = evt.target
                     self.aspectRatio(img.width / img.height)
                     self.original(img)
-                    self.img.refresh()
-
-                    self.md5.refresh()
-                    max_width = Math.floor(initialWidth)
-                    max_height = Math.floor(initialWidth / (img.width / img.height))
-                    self.small_img.refresh(
-                        'async'
-                        max_width
-                        max_height
-                    ).then(
-                        () ->
-                            de = d
-                            d = null
-                            de.resolve(self)
+                    self.img.refresh('async').then(->
+                        # Remove original to conserve a little memory
+                        self.original(null)
+                        self.md5.refresh('async')
+                    ).then(->
+                        self.small_img.refresh(
+                            'async'
+                            Math.floor(initialWidth)
+                            Math.floor(initialWidth / (img.width / img.height))
+                        )
+                    ).then(->
+                        de = d
+                        d = null
+                        de.resolve(self)
                     )
 
                 reader = new FileReader()
