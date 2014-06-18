@@ -60,10 +60,11 @@ m.factory(
                     endPoint = row.length - 1 + index
                     for img_index in [index..endPoint]
                         img = @images()[img_index]
-                        ar = img.aspectRatio()
-                        max_width = (modifiedWidth - borderSize) * ar
-                        max_height = modifiedWidth - borderSize
-                        img.small_img.refresh('async', max_width, max_height).then(m.redraw)
+                        img.small_img.refresh(
+                            'async'
+                            (modifiedWidth - borderSize) * img.aspectRatio()
+                            modifiedWidth - borderSize
+                        ).then(m.redraw)
                         total += 1
 
                     index += row.length
