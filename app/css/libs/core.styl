@@ -1,3 +1,5 @@
+@import 'functions'
+
 html, body
     height: 100%
     margin: 0px
@@ -8,8 +10,16 @@ html, body
     color: #717171
     background-color: #f3f5f9
 
+.stretch
+    height: 100%
+
 .slate
     top: 50%
-    transform: translateY(-50%)
-    -webkit-transform: translateY(-50%)
-    -moz-transform: translateY(-50%)
+    vendor(transform, translateY(-50%))
+
+.off
+    display: none
+
+.hidden
+    visibility: hidden
+

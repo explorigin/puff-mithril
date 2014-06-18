@@ -1,0 +1,136 @@
+#nav
+    z-index: 1000
+
+    .nav-brand
+        text-align: center
+
+    &.nav-off-screen
+        position: absolute
+        left: 0
+        top: 0
+        bottom: 0
+        visibility: visible
+        overflow-x: hidden
+        overflow-y: auto
+        -webkit-overflow-scrolling: touch
+
+        .nav-primary
+            display: block !important
+
+.nav-bar
+    position: relative
+    vendor(transition, opacity .5s)
+
+    & > .btn
+        position: absolute
+        font-size: 1.3em
+        padding: 9px 12px
+        line-height: 30px
+        cursor: pointer
+
+    .nav-brand + .btn
+        right: 0
+        top: 0
+
+    .nav-brand
+        font-size: 25px
+        line-height: navBarVerticalHeight
+        display: block
+
+        &:hover
+            text-decoration: none
+
+.nav-primary
+    line-height: 1.5
+
+    & > ul
+        & > li
+            & > a
+                padding: 15px 15px
+                position: relative
+                font-weight: bold
+                text-shadow: 0 1px 1px rgba(0,0,0,0.2)
+                border-bottom: 1px solid rgba(0,0,0,0.05) !important
+                border-top: 1px solid rgba(255,255,255,0.05) !important
+                transition: color .3s ease-in-out 0s
+
+                i
+                    margin-right: 0.5em
+                    font-size: 14px
+
+            &.active > a
+                color: #FFF
+                background-color: rgba(0, 0, 0, 0.075) !important
+                text-shadow: none
+
+@media (min-width: 768px)
+    .vbox
+        display: table
+        border-spacing: 0
+        position: relative
+        height: 100%
+        width: 100%
+
+        & > .app-menu
+            top: navBarVerticalHeight
+            bottom: 50px
+
+        & > section, & > footer
+            position: absolute
+            top: 0
+            bottom: 0
+            width: 100%
+
+        & > footer
+            top: auto
+
+    #nav
+        width: navBarWidthWide
+        vendor(transition, width .25s)
+        vendor(backface-visibility, hidden)
+
+        &.nav-off-screen
+            left: navBarWidthWide * -1
+            overflow: visible
+
+            .nav-bar
+                opacity: 0.4
+                left: navBarWidthWide
+
+                &:hover
+                    opacity: 0.9
+
+        &.nav-vertical
+            width: navBarWidthNarrow
+
+            &.nav-off-screen
+                left: navBarWidthNarrow * -1
+
+                .nav-bar
+                    left: navBarWidthNarrow
+
+            .nav-bar
+                font-size: 20px
+                padding-left: 0
+                padding-right: 0
+
+            .nav-primary > ul > li > a > span
+                display: block
+
+            .nav-primary > ul > li > a
+                position: relative
+                padding: 12px 0
+                font-size: 11px
+                text-align: center
+
+
+    #nav.nav-vertical + #content
+        left: navBarWidthNarrow
+
+    #nav.nav-off-screen + #content
+        left: 0px
+
+@media (max-width: 767px)
+    .nav-off-screen
+        max-width: 400px
+        width: 75%

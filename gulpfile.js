@@ -15,14 +15,14 @@ var gulp = require('gulp'),
         distImages: ['build/**/*.{gif,jpg,png}'],
         coffee: ['app/**/*.coffee'],
         copyables: ['app/**/*.{html,js,woff,map,gif,jpg,png,css}', '!app/**/*.min.{css,js}'],
-        stylus: ['app/**/*.styl', '!app/bower_components/**/*.styl']
+        stylus: ['app/css/*.styl', '!app/bower_components/**/*.styl']
     };
 
 
 gulp.task('stylus', function() {
     return gulp.src(paths.stylus)
         .pipe(stylus({errors: true}))
-        .pipe(gulp.dest('build'));
+        .pipe(gulp.dest('build/css'));
 });
 
 gulp.task('coffeescript', function() {
@@ -93,7 +93,7 @@ gulp.task('watch', ['build'], function() {
         .on('change', logIt);
     gulp.watch([paths.copyables], ['copyables'])
         .on('change', logIt);
-    gulp.watch([paths.stylus], ['styles'])
+    gulp.watch(['app/**/*.styl'], ['styles'])
         .on('change', logIt);
 });
 
