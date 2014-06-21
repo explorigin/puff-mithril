@@ -176,7 +176,7 @@ m.factory(
                         height = viewPort.height() - borderSize
                         width = height * img.aspectRatio()
                     src = img.img().src
-                    cls = 'focused'
+                    cls = 'focused slate'
                 else
                     width = img.width()
                     height = img.height()
