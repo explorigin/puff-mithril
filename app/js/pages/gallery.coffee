@@ -16,6 +16,7 @@ m.factory(
         viewPort =
             width: m.cachedComputed(-> containerEl.clientWidth - scrollBarWidth)
             height: m.cachedComputed(-> containerEl.clientHeight)
+            aspectRatio: -> viewPort.width() / viewPort.height()
 
         Gallery = ->
             self = @
@@ -114,6 +115,7 @@ m.factory(
             @gallery = m.prop(new Gallery())
             @mode = m.prop('draghover')
             @modeChangeTimeout = m.prop()
+            @focusIndex = m.prop(null)
 
             refreshDimensions = (evt) ->
                 # Defer refreshing the viewport dimensions so we know that the container has resized
@@ -127,6 +129,13 @@ m.factory(
                 )
             @resizeSubscription = window.addEventListener('resize', refreshDimensions)
             @onunload = -> window.removeEventListener('resize', refreshDimensions)
+
+            # Event Interactions
+            @toggleFocusOnImage = (index) ->
+                ->
+                    if self.focusIndex() == index
+                        index = null
+                    self.focusIndex(index)
 
 
             @dragDrop = (evt) ->
@@ -158,14 +167,27 @@ m.factory(
 
         view: (ctrl) ->
             g = ctrl.gallery()
-            imgTmpl = (img) ->
-                width = img.width()
-                height = img.height()
-                src = img.small_img().src
+            imgTmpl = (img, index) ->
+                if ctrl.focusIndex() is index
+                    if viewPort.aspectRatio() < img.aspectRatio()
+                        width = viewPort.width() - borderSize
+                        height = width / img.aspectRatio()
+                    else
+                        height = viewPort.height() - borderSize
+                        width = height * img.aspectRatio()
+                    src = img.img().src
+                    cls = 'focused'
+                else
+                    width = img.width()
+                    height = img.height()
+                    src = img.small_img().src
+                    cls = if ctrl.focusIndex() is null then '' else 'hidden'
                 m(
                     '.image'
                     {
                         style: "width: #{width}px; height: #{height}px; background-image: url(#{src})"
+                        'class': cls
+                        onclick: ctrl.toggleFocusOnImage(index)
                     }
                 )
 

@@ -13,14 +13,18 @@
 
     .images
         opacity: 0.2
+        text-align: center
 
         &.album
             opacity: 1
             z-index: 1
 
         .image
-            float: left
-            position: relative
+            display: inline-block
             background-position: center center
             background-size: 100% 100%
             margin: 2px
+
+            &.focused
+                vendor2(transition, width .25s, height .25s)
+                position: relative
