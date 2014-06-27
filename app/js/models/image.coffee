@@ -23,9 +23,10 @@ m.factory(
             self = @
 
             # Image properties
+            @blob = m.prop(null)
+            @original = m.prop(null)
             @width = m.prop(initialWidth)
             @height = m.prop(initialHeight)
-            @original = m.prop(null)
             @mimetype = m.prop('image/*')
             @filename = m.prop('[unnamed]')
             @lastModifiedDate = m.prop(new Date())
@@ -35,7 +36,13 @@ m.factory(
             @img = m.cachedComputed( ->
                 if self.original() is null
                     return null
-                return PhotoUtils.resize(self.original(), screen.width(), screen.height())
+
+                d = m.deferred()
+
+                img = PhotoUtils.resize(self.original(), screen.width(), screen.height())
+                img.onload = ->
+                    d.resolve(img)
+                return d.promise
             )
 
             @small_img = m.cachedComputed((width, height) ->
@@ -45,19 +52,24 @@ m.factory(
                 if self.width() == width and self.height() == height and self.small_img()
                     return self.small_img()
 
+                d = m.deferred()
+
                 self.width(width or self.width())
                 self.height(height or self.height())
-                return PhotoUtils.resize(self.img(), self.width(), self.height())
+                img = PhotoUtils.resize(self.img(), self.width(), self.height())
+                img.onload = ->
+                    d.resolve(img)
+                return d.promise
             )
 
             @md5 = m.cachedComputed( ->
-                if self.img() is null
+                if self.original() is null
                     return null
-                return md5(self.img().src)
+                return md5(self.original().src)
             )
 
             # Methods
-            @readAsDataURL = (file) ->
+            @read = (file) ->
                 d = m.deferred()
 
                 imgOnload = (evt) ->
@@ -65,10 +77,10 @@ m.factory(
                     self.aspectRatio(img.width / img.height)
                     self.original(img)
                     self.img.refresh().then(->
-                        # Remove original to conserve a little memory
-                        self.original(null)
                         self.md5.refresh()
                     ).then(->
+                        # Remove original to conserve a little memory
+                        self.original(null)
                         self.small_img.refresh(
                             Math.floor(initialWidth)
                             Math.floor(initialWidth / (img.width / img.height))
@@ -79,14 +91,10 @@ m.factory(
                         de.resolve(self)
                     )
 
-                reader = new FileReader()
-                reader.onprogress = (evt) -> d.notify(evt.loaded / evt.total)
-                reader.onload = (evt) ->
-                    img = new Image()
-                    img.onload = imgOnload
-                    img.src = evt.target.result
-
-                reader.readAsDataURL(file)
+                img = new Image()
+                img.onload = imgOnload
+                img.src = window.URL.createObjectURL(file)
+                self.blob(file)
 
                 self.mimetype(file.type)
                 self.filename(file.name)

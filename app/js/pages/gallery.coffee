@@ -80,7 +80,7 @@ m.factory(
                 return unless file = self.files().shift()
 
                 img = new GalleryImage()
-                img.readAsDataURL(file).then(
+                img.read(file).then(
                     (img) ->
                         # Grab the md5 precomputed hashes of the existing images
                         imageHashes = _.pluck(self.images(), 'md5').map((md5) -> md5())
