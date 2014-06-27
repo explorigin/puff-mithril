@@ -9,14 +9,11 @@ m.factory(
         initialHeight = 300
 
         screen =
-            width: m.cachedComputed(
-                ->
-                    window.screen.width
-                )
-            height: m.cachedComputed(
-                ->
-                    window.screen.height
-                )
+            width: ->
+                window.screen.width
+            height: ->
+                window.screen.height
+
 
         # Image model
         return ->
@@ -25,6 +22,9 @@ m.factory(
             # Image properties
             @blob = m.prop(null)
             @original = m.prop(null)
+            @img = m.prop(null)
+            @smallImg = m.prop(null)
+            @hash = m.prop(null)
             @width = m.prop(initialWidth)
             @height = m.prop(initialHeight)
             @mimetype = m.prop('image/*')
@@ -33,40 +33,36 @@ m.factory(
             @aspectRatio = m.prop(1.33)
 
             # Computed Image Properties
-            @img = m.cachedComputed( ->
-                if self.original() is null
-                    return null
-
+            @resizeImg = ->
                 d = m.deferred()
+
+                if self.original() is null
+                    d.reject(new Error('No original image exists to build img from.'))
 
                 img = PhotoUtils.resize(self.original(), screen.width(), screen.height())
                 img.onload = ->
+                    self.img(img)
                     d.resolve(img)
                 return d.promise
-            )
 
-            @small_img = m.cachedComputed((width, height) ->
-                if self.img() is null
-                    return null
-
-                if self.width() == width and self.height() == height and self.small_img()
-                    return self.small_img()
-
+            @resizeSmallImg = (width, height) ->
                 d = m.deferred()
+
+                if self.img() is null
+                    d.reject(new Error('No img exists to build smallImg from.'))
 
                 self.width(width or self.width())
                 self.height(height or self.height())
                 img = PhotoUtils.resize(self.img(), self.width(), self.height())
                 img.onload = ->
+                    self.smallImg(img)
                     d.resolve(img)
                 return d.promise
-            )
 
-            @md5 = m.cachedComputed( ->
+            @updateHash = ->
                 if self.original() is null
                     return null
-                return md5(self.original().src)
-            )
+                return self.hash(md5(self.original().src))
 
             # Methods
             @read = (file) ->
@@ -76,12 +72,12 @@ m.factory(
                     img = evt.target
                     self.aspectRatio(img.width / img.height)
                     self.original(img)
-                    self.img.refresh().then(->
-                        self.md5.refresh()
+                    self.resizeImg().then(->
+                        self.updateHash()
                     ).then(->
                         # Remove original to conserve a little memory
                         self.original(null)
-                        self.small_img.refresh(
+                        self.resizeSmallImg(
                             Math.floor(initialWidth)
                             Math.floor(initialWidth / (img.width / img.height))
                         )

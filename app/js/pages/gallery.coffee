@@ -14,8 +14,8 @@ m.factory(
         containerEl = document.getElementById('content')
 
         viewPort =
-            width: m.cachedComputed(-> containerEl.clientWidth - scrollBarWidth)
-            height: m.cachedComputed(-> containerEl.clientHeight)
+            width: -> containerEl.clientWidth - scrollBarWidth
+            height: -> containerEl.clientHeight
             aspectRatio: -> viewPort.width() / viewPort.height()
 
         Gallery = ->
@@ -61,7 +61,7 @@ m.factory(
                     endPoint = row.length - 1 + index
                     for img_index in [index..endPoint]
                         img = @images()[img_index]
-                        img.small_img.refresh(
+                        img.resizeSmallImg(
                             (modifiedWidth - borderSize) * img.aspectRatio()
                             modifiedWidth - borderSize
                         ).then(m.redraw)
@@ -83,9 +83,9 @@ m.factory(
                 img.read(file).then(
                     (img) ->
                         # Grab the md5 precomputed hashes of the existing images
-                        imageHashes = _.pluck(self.images(), 'md5').map((md5) -> md5())
+                        imageHashes = _.pluck(self.images(), 'hash').map((hash) -> hash())
                         # If the image is not already in the group, then add it and resize all the images.
-                        if img.md5() not in imageHashes
+                        if img.hash() not in imageHashes
                             self.images().push(img)
                             return self.resizeImages()
                     (err) ->
@@ -121,12 +121,7 @@ m.factory(
                 setTimeout(
                     ->
                         m.startComputation()
-                        m.sync([
-                            viewPort.width.refresh()
-                            viewPort.height.refresh()
-                        ]).then(->
-                            self.gallery().resizeImages().then(m.endComputation)
-                        )
+                        self.gallery().resizeImages().then(m.endComputation)
                     0
                 )
             @resizeSubscription = window.addEventListener('resize', refreshDimensions)
@@ -181,7 +176,7 @@ m.factory(
                 else
                     width = img.width()
                     height = img.height()
-                    src = img.small_img().src
+                    src = img.smallImg().src
                     cls = if ctrl.focusIndex() is null then '' else 'hidden'
                 m(
                     '.image'
