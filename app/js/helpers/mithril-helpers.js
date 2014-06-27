@@ -11,12 +11,22 @@
         return function(evt) { prop(!prop()); };
     };
 
-    m.cachedComputed = function(compute, async) {
+    m.cachedComputed = function(compute, deferEvaluation) {
         var store = undefined,
             d = null,
             prop = function() { return store; };
 
-        async = async === undefined ? false : async;
+        function storeAnswer(value) {
+            if (typeof value.then === 'function') {
+                return value.then(storeAnswer)
+            } else {
+                deferred = d
+                d = null;
+                store = value;
+                deferred.resolve(store);
+                return value;
+            }
+        }
 
         prop.clear = function() {
             store = undefined;
@@ -25,40 +35,31 @@
                 d = null;
             }
         };
-        prop.refresh = function(async) {
-            async = async === undefined ? false : async;
-
-            if (async === false) {
-                if (d !== null) {
-                    throw new Error("Sync refresh already in progress.");
-                }
-                store = compute();
-                return store;
+        prop.refresh = function() {
+            if (d !== null) {
+                return d.promise;
             } else {
-                if (d !== null) {
-                    return d.promise;
-                } else {
-                    d = m.deferred();
-                    setTimeout(function() {
+                d = m.deferred();
+                setTimeout(function () {
+                    try {
+                        var result = compute.apply(self, this.args);
+                        return storeAnswer(result);
+                    } catch (e) {
                         deferred = d
-                        try {
-                            store = compute.apply(self, this.args);
-                            d = null;
-                            deferred.resolve(store);
-                        } catch (e) {
-                            d = null;
-                            deferred.reject(e);
-                        }
-                    }.bind({args: Array.prototype.slice.call(arguments, 1)}), 0)
-                    return d.promise;
-                }
+                        d = null;
+                        deferred.reject(e);
+                    }
+                }.bind({args: Array.prototype.slice.call(arguments, 0)}), 0);
+                return d.promise;
             }
         };
         prop.toJSON = function() {
             return store
         };
 
-        prop.refresh(async);
+        if (!deferEvaluation) {
+            prop.refresh();
+        }
 
         return prop
     };

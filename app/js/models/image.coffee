@@ -40,9 +40,9 @@ m.factory(
 
             @small_img = m.cachedComputed((width, height) ->
                 if self.img() is null
-                    return new Image()
+                    return null
 
-                if self.width() == width and self.height() == height
+                if self.width() == width and self.height() == height and self.small_img()
                     return self.small_img()
 
                 self.width(width or self.width())
@@ -52,7 +52,7 @@ m.factory(
 
             @md5 = m.cachedComputed( ->
                 if self.img() is null
-                    return new Image()
+                    return null
                 return md5(self.img().src)
             )
 
@@ -64,13 +64,12 @@ m.factory(
                     img = evt.target
                     self.aspectRatio(img.width / img.height)
                     self.original(img)
-                    self.img.refresh('async').then(->
+                    self.img.refresh().then(->
                         # Remove original to conserve a little memory
                         self.original(null)
-                        self.md5.refresh('async')
+                        self.md5.refresh()
                     ).then(->
                         self.small_img.refresh(
-                            'async'
                             Math.floor(initialWidth)
                             Math.floor(initialWidth / (img.width / img.height))
                         )

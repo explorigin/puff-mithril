@@ -62,7 +62,6 @@ m.factory(
                     for img_index in [index..endPoint]
                         img = @images()[img_index]
                         img.small_img.refresh(
-                            'async'
                             (modifiedWidth - borderSize) * img.aspectRatio()
                             modifiedWidth - borderSize
                         ).then(m.redraw)
@@ -122,9 +121,12 @@ m.factory(
                 setTimeout(
                     ->
                         m.startComputation()
-                        viewPort.width.refresh()
-                        viewPort.height.refresh()
-                        self.gallery().resizeImages().then(m.endComputation)
+                        m.sync([
+                            viewPort.width.refresh()
+                            viewPort.height.refresh()
+                        ]).then(->
+                            self.gallery().resizeImages().then(m.endComputation)
+                        )
                     0
                 )
             @resizeSubscription = window.addEventListener('resize', refreshDimensions)
@@ -136,7 +138,6 @@ m.factory(
                     if self.focusIndex() == index
                         index = null
                     self.focusIndex(index)
-
 
             @dragDrop = (evt) ->
                 self.gallery().importFiles(evt.dataTransfer.files)
