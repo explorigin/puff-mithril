@@ -4,7 +4,7 @@ m.factory(
     [
         'helpers.photo-utils'
     ]
-    (PhotoUtils, ProgressBar) ->
+    (PhotoUtils) ->
         initialWidth = 400
         initialHeight = 300
 
