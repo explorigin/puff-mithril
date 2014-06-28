@@ -159,6 +159,12 @@ m.factory(
                 # This is needed to tell the browser that the element can accept a drop.
                 evt.preventDefault()
 
+            @prevImage = ->
+                self.focusIndex(Math.max(self.focusIndex() - 1, 0))
+
+            @nextImage = ->
+                self.focusIndex(Math.min(self.focusIndex() + 1, self.gallery().images().length - 1))
+
             return @
 
         view: (ctrl) ->
@@ -189,10 +195,10 @@ m.factory(
 
             m(
                 '.gallery.app-canvas'
+                'class': if ctrl.focusIndex() is null then ctrl.mode() else 'focused'
                 [
                     m(
                         '.dropzone.pane'
-                        'class': ctrl.mode()
                         ondrop: m.debubble(ctrl.dragDrop)
                         ondragover: ctrl.dragOver
                         ondragenter: m.debubble(ctrl.dragEnter)
@@ -207,9 +213,12 @@ m.factory(
                     )
                     m(
                         '.images.pane'
-                        'class': ctrl.mode()
                         ondragenter: m.debubble(ctrl.dragEnter)
-                        g.images().map(imgTmpl)
+                        [
+                            m('.back', {onclick: ctrl.prevImage}, [Icon('angle-left')])
+                            g.images().map(imgTmpl)
+                            m('.forward', {onclick: ctrl.nextImage}, [Icon('angle-right')])
+                        ]
                     )
                 ]
             )

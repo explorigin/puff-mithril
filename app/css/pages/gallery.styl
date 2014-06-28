@@ -1,30 +1,59 @@
 @require 'functions'
 
 .gallery
+    .forward, .back
+        display: none
+
     .pane
         vendor(transition, opacity .25s)
         opacity: 0
         z-index: 0
 
-    .dropzone.draghover
-        opacity: 0.9
-        z-index: 1
-
-
-    .images
-        opacity: 0.2
-        text-align: center
-
-        &.album
-            opacity: 1
+    &.draghover
+        .dropzone
+            opacity: 0.9
             z-index: 1
 
-        .image
-            display: inline-block
-            background-position: center center
-            background-size: 100% 100%
-            margin: 2px
+    &.album, &.focused
+        .images
+            opacity: 1
+            text-align: center
 
-            &.focused
-                vendor2(transition, width .25s, height .25s)
-                position: relative
+            .image
+                display: inline-block
+                background-position: center center
+                background-size: 100% 100%
+                margin: 2px
+                cursor: pointer
+
+    &.focused
+        .forward, .back
+            display: inline-block
+            font-size: 7em
+            position: absolute
+            color: #717171
+            opacity: 0.4
+            height: 100%
+            width: 20%
+            vendor(transition, opacity .25s)
+            cursor: pointer
+            z-index: 1
+
+            &>*
+                verticalCenter()
+
+            &:hover
+                opacity: 0.9
+
+        .forward
+            right: 1%
+            text-align: right
+            margin-right: 33px
+
+        .back
+            left: 1%
+            text-align: left
+
+        .image.focused
+            vendor2(transition, width .25s, height .25s)
+            position: relative
