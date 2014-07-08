@@ -2,11 +2,9 @@ m.factory(
     'pages.home',
     [
         'application.config'
-        'helpers.storage'
         'helpers.icon'
     ]
-    (cfg, Storage, Icon) ->
-        storage = new Storage()
+    (cfg, Icon) ->
 
         PubSub.subscribe(
             'REQUEST_FULLSCREEN',

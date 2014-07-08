@@ -4,9 +4,8 @@ m.factory(
         'application.config',
         'components.form'
         'components.panel'
-        'helpers.storage'
     ]
-    (cfg, Form, Panel, Storage) ->
+    (cfg, Form, Panel) ->
         USER_INPUT = 'u'
         CHECKING = 'c'
         VALID = 'v'
@@ -19,8 +18,6 @@ m.factory(
             u: 'animated slideInDown'
             c: ''
             n: ''
-
-        storage = new Storage()
 
         controller: () ->
             @timeout = m.prop(null)
