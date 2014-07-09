@@ -9,7 +9,7 @@ m.factory(
         db = Storage('puff')
 
         # Utility functions
-        resizeImg = (img, maxWidth, maxHeight) ->
+        resizeImg = (img, maxWidth, maxHeight, mimetype, quality) ->
             # Resizes src Javascript Image to maxWidth x maxHeight (but maintaining the same aspect ratio)
 
             d = m.deferred()
@@ -17,7 +17,7 @@ m.factory(
             if not img.src
                 d.reject(new Error('No original image exists to build screenImg from.'))
 
-            outImage = PhotoUtils.resize(img, maxWidth, maxHeight)
+            outImage = PhotoUtils.resize(img, maxWidth, maxHeight, mimetype, quality)
             outImage.onload = ->
                 d.resolve(outImage)
             return d.promise
@@ -44,7 +44,8 @@ m.factory(
             @smallImg = m.prop(null)
             @width = m.prop(initialData.width or 400)
             @height = m.prop(initialData.height or 300)
-            @mimetype = m.prop(initialData.mimetype or initialData.type or 'image/*')
+            @mimetype = m.prop(initialData.mimetype or initialData.type or 'image/jpeg')
+            @quality = m.prop(initialData.quality or 0.7)
             @filename = m.prop(initialData.filename or initialData.name or '[unnamed]')
             @lastModifiedDate = m.prop(new Date(initialData.lastModifiedDate or null))
             @aspectRatio = m.prop(initialData.aspectRatio or 1.33)
@@ -94,7 +95,7 @@ m.factory(
                 db.store.remove('image', self._id())
 
             @resizeSmallImg = (width, height) ->
-                resizeImg(self.screenImg(), width, height)
+                resizeImg(self.screenImg(), width, height, self.mimetype(), self.quality())
                 .then(
                     (img) ->
                         self.smallImg(img)
@@ -112,12 +113,16 @@ m.factory(
                     img
                     window.screen.width
                     window.screen.height
+                    self.mimetype()
+                    self.quality()
                 ).then( (screenImg) ->
                     self.screenImg(screenImg)
                     resizeImg(
                         img
                         Math.floor(self.width())
                         Math.floor(self.width() / self.aspectRatio())
+                        self.mimetype()
+                        self.quality()
                     )
                 ).then( (smallImg) ->
                     self.smallImg(smallImg)
