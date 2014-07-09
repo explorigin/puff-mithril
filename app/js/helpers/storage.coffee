@@ -5,22 +5,11 @@ m.factory(
         dbCache = {}
         revMap = {}
 
-        populateRev = (id, saveRev = true) ->
-            d = m.deferred()
-            db.get(
-                id
-                (err, result) ->
-                    revMap[id] = result._rev unless saveRev isnt true
-                    d.resolve(result._rev)
-            )
-            d.promise
-
         handleResponse = (d) ->
             (err, result) ->
-                console.log(err, result)
                 if err
                     return d.reject(err)
-                else if result.id
+                else if result.id and result.rev
                     revMap[result.id] = result.rev
                 d.resolve(result)
 
@@ -42,6 +31,16 @@ m.factory(
                     update: {}
                     remove: {}
                     change: {}
+
+            populateRev = (docId, saveRev = true) ->
+                d = m.deferred()
+                db.get(
+                    docId
+                    (err, result) ->
+                        revMap[docId] = result._rev unless saveRev isnt true
+                        d.resolve(result._rev)
+                )
+                d.promise
 
             @account =
                 signUp: (username, password) ->
@@ -81,35 +80,51 @@ m.factory(
                     subscriptions.account[evtName][id] = callback
 
             @store =
-                add: (type, obj, attachmentType, attachment) ->
+                add: (type, obj) ->
                     d = m.deferred()
                     obj.type = type
                     db.post(obj, handleResponse(d))
                     d.promise
-                update: (type, id, obj, attachmentType, attachment) ->
+                update: (type, docId, obj) ->
                     d = m.deferred()
-                    rev = revMap[id]
+                    rev = revMap[docId]
                     put = (rev) ->
-                        db.put(obj, id, rev, handleResponse(d))
+                        db.put(obj, docId, rev, handleResponse(d))
 
                     obj.type = type
 
                     if not rev
-                        populateRev(id).then(put, (err) -> d.reject(err))
+                        populateRev(docId).then(put, (err) -> d.reject(err))
                     else
                         put(rev)
 
                     d.promise
-                updateAttachment: (id, attId, attachment, mimetype) ->
+                updateAttachment: (docId, attId, attachment, mimetype) ->
                     d = m.deferred()
-                    rev = revMap[id]
+                    rev = revMap[docId]
                     put = (rev) ->
-                        db.putAttachment(id, attId, rev, attachment, mimetype, handleResponse(d, false))
+                        db.putAttachment(docId, attId, rev, attachment, mimetype, handleResponse(d))
 
                     if not rev
-                        populateRev(id).then(put, (err) -> d.reject(err))
+                        populateRev(docId).then(put, (err) -> d.reject(err))
                     else
                         put(rev)
+
+                    d.promise
+                getAttachment: (docId, attachmentId) ->
+                    d = m.deferred()
+                    db.getAttachment(docId, attachmentId, handleResponse(d))
+                    d.promise
+                removeAttachment: (docId, attachmentId) ->
+                    d = m.deferred()
+                    rev = revMap[docId]
+                    remove = (rev) ->
+                        db.removeAttachment(docId, attachmentId, rev, handleResponse(d))
+
+                    if not rev
+                        populateRev(id).then(remove, (err) -> d.reject(err))
+                    else
+                        remove(rev)
 
                     d.promise
                 find: (type, id) ->
@@ -121,12 +136,21 @@ m.factory(
                     map = (doc, emit) ->
                         if doc.type is type
                             emit(null, doc)
-                    db.query(map, handleResponse(d, false))
+                    db.query(map, {attachments:true}, handleResponse(d))
                     d.promise
-                remove: (type, id) ->
-                     d = m.deferred()
-                     d.reject({msg: 'Not Implemented'})
-                     d.promise
+                remove: (type, docId) ->
+                    d = m.deferred()
+                    rev = revMap[docId]
+                    remove = (rev) ->
+                        db.remove(docId, rev, handleResponse(d))
+                        delete revMap[docId]
+
+                    if not rev
+                        populateRev(docId).then(remove, (err) -> d.reject(err))
+                    else
+                        remove(rev)
+
+                    d.promise
                 removeAll: (queryFunc) ->
                      d = m.deferred()
                      d.reject({msg: 'Not Implemented'})
@@ -147,6 +171,8 @@ m.factory(
                     subscriptions.account[evtName][id] = callback
 
             return @
+
+        API.prototype.IDENTIFIER_KEYS = ['_id', '_rev']
 
         (databaseUri) ->
             if databaseUri not in dbCache

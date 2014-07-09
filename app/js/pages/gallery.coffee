@@ -5,30 +5,37 @@ m.factory(
         'models.image'
         'helpers.icon'
         'helpers.photo-utils'
+        'helpers.storage'
     ]
-    (cfg, GalleryImage, Icon, PhotoUtils) ->
+    (cfg, GalleryImage, Icon, PhotoUtils, Storage) ->
         scrollBarWidth = PhotoUtils.scrollBarWidth()
         borderSize = 4
         UI_DELAY = 20
 
-        containerEl = document.getElementById('content')
+        currentGallery = null
+        clearGalleryTimeout = null
 
-        viewPort =
-            width: -> containerEl.clientWidth - scrollBarWidth
-            height: -> containerEl.clientHeight
-            aspectRatio: -> viewPort.width() / viewPort.height()
+        db = Storage('puff')
 
         Gallery = ->
             self = @
             resizeImageLock = null
 
+            _ready = m.deferred()
+
             # Properties
             @images = m.prop([])  # Array of Gallery Photo controllers
             @optimalImageHeightRatio = m.prop(3/8)
             @files = m.prop([])  # Incoming files
+            @container = m.prop(null)
+            @ready = _ready.promise
 
             # Computed Properties
-            @optimalImageHeight = -> viewPort.height() * @optimalImageHeightRatio()
+            @containerWidth = -> if self.container() then self.container().clientWidth - scrollBarWidth else 0
+            @containerHeight = -> if self.container() then self.container().clientHeight else 0
+            @containerAspectRatio = -> if self.container() then self.containerWidth() / self.containerHeight() else 1
+
+            @optimalImageHeight = -> self.containerHeight() * @optimalImageHeightRatio()
 
             @totalOptimalImageWidth = ->
                 optimalHeight = @optimalImageHeight()
@@ -38,7 +45,7 @@ m.factory(
                 )
 
             @partitions = ->
-                rowCount = Math.ceil(@totalOptimalImageWidth() / viewPort.width())
+                rowCount = Math.ceil(@totalOptimalImageWidth() / self.containerWidth())
                 partition(@images().map((i) -> i.aspectRatio() * 100), rowCount)
 
             # Methods
@@ -47,11 +54,12 @@ m.factory(
                     return resizeImageLock.promise
 
                 resizeImageLock = m.deferred()
+                window.images  = self.images()
 
                 rows = @partitions()
                 index = 0
                 total = 0
-                vpWidth = viewPort.width() * 100
+                vpWidth = self.containerWidth() * 100
                 for row in rows
                     # Linear partition will inject empty rows to complete the mathmatic equation.  Here we just ignore those rows.
                     break unless row.length > 0
@@ -75,49 +83,73 @@ m.factory(
 
                 return r.promise
 
-            importNextFile = ->
+            _importNextFile = ->
                 # Read the top file.
                 return unless file = self.files().shift()
 
-                img = new GalleryImage()
-                img.read(file).then(
-                    (img) ->
+                img = new GalleryImage(file)
+                img.ready.then(
+                    (instance) ->
                         # Grab the md5 precomputed hashes of the existing images
                         imageHashes = _.pluck(self.images(), 'hash').map((hash) -> hash())
                         # If the image is not already in the group, then add it and resize all the images.
-                        if img.hash() not in imageHashes
-                            self.images().push(img)
+                        if instance.hash() not in imageHashes
+                            self.images().push(instance)
                             return self.resizeImages()
                     (err) ->
                         console.log(err)
-                        setTimeout(importNextFile, UI_DELAY)
+                        setTimeout(_importNextFile, UI_DELAY)
                 ).then(
                     (added) ->
                         m.redraw()
-                        setTimeout(importNextFile, UI_DELAY) unless added is 0
+                        setTimeout(_importNextFile, UI_DELAY) unless added is 0
                     (err) ->
                         console.log(err)
-                        setTimeout(importNextFile, UI_DELAY)
+                        setTimeout(_importNextFile, UI_DELAY)
                 )
 
             @importFiles = (files) ->
                 # Filter for just our image files
                 self.files(_.filter(files, (f) -> f.type.indexOf('image/') is 0))
                 # Give a delay for the UI to update between image loads.
-                setTimeout(importNextFile, UI_DELAY)
+                setTimeout(_importNextFile, UI_DELAY)
+
+            importImages = (records) ->
+                m.sync(_.pluck(records.map((img) -> new GalleryImage(img)), 'ready')).then(
+                    (loadedImages) ->
+                        self.images().push.apply(self.images(), loadedImages)
+                        self.resizeImages()
+                    (rejectedImages) ->
+                        images = rejectedImages.filter((i) -> i.ready and i.ready() isnt null)
+                        self.images().push.apply(self.images(), images)
+                        console.log(
+                            "ERROR: Some images could not be loaded.",
+                            rejectedImages.filter((i) -> not i.ready or i.ready() is null))
+                        self.resizeImages()
+                )
+
+            # Initialization Processing
+            resolveIt = -> _ready.resolve(self)
+            db.store.findAll('image').then(
+                (result) ->
+                    importImages(result.rows.map((r) -> r.value))
+                (err) ->
+                    # TODO: Sometimes importImages will fail and then this method will be called.  Is that how promises work?
+                    _ready.resolve(self)
+            ).then(resolveIt, resolveIt)
 
             return @
 
         controller: () ->
             window.s = self = @  # window.s for debugging
 
-            @gallery = m.prop(new Gallery())
+            @gallery = m.prop(currentGallery or new Gallery())
             @mode = m.prop('draghover')
             @modeChangeTimeout = m.prop()
             @focusIndex = m.prop(null)
 
             refreshDimensions = (evt) ->
-                # Defer refreshing the viewport dimensions so we know that the container has resized
+                # Defer refreshing the container dimensions so we know that the container has resized
                 setTimeout(
                     ->
                         m.startComputation()
@@ -125,7 +157,16 @@ m.factory(
                     0
                 )
             @resizeSubscription = window.addEventListener('resize', refreshDimensions)
-            @onunload = -> window.removeEventListener('resize', refreshDimensions)
+            @onunload = ->
+                window.removeEventListener('resize', refreshDimensions)
+
+                # After 30 seconds allow the gallery to be garbage collected
+                clearGalleryTimeout = setTimeout(
+                    ->
+                        clearGalleryTimeout = null
+                        currentGallery = null
+                    30000
+                )
 
             # Event Interactions
             @toggleFocusOnImage = (index) ->
@@ -165,20 +206,39 @@ m.factory(
             @nextImage = ->
                 self.focusIndex(Math.min(self.focusIndex() + 1, self.gallery().images().length - 1))
 
+            @viewConfig = (el, previouslyCreated) ->
+                g = self.gallery()
+                width = g.containerWidth()
+                height = g.containerHeight()
+
+                g.container(el)
+
+                if g.containerWidth() != width or g.containerHeight() != height
+                    refreshDimensions()
+
+            currentGallery = self.gallery()
+            clearTimeout(clearGalleryTimeout) unless clearGalleryTimeout is null
+
+            currentGallery.ready.then(
+                () ->
+                    if currentGallery.images().length
+                        self.mode('album')
+            )
+
             return @
 
         view: (ctrl) ->
             g = ctrl.gallery()
             imgTmpl = (img, index) ->
                 if ctrl.focusIndex() is index
-                    if viewPort.aspectRatio() < img.aspectRatio()
-                        width = viewPort.width() - borderSize
+                    if g.containerAspectRatio() < img.aspectRatio()
+                        width = g.containerWidth() - borderSize
                         height = width / img.aspectRatio()
                     else
-                        height = viewPort.height() - borderSize
+                        height = g.containerHeight() - borderSize
                         width = height * img.aspectRatio()
-                    src = img.img().src
-                    cls = 'focused slate'
+                    src = img.screenImg().src
+                    cls = 'focused'
                 else
                     width = img.width()
                     height = img.height()
@@ -196,6 +256,7 @@ m.factory(
             m(
                 '.gallery.app-canvas'
                 'class': if ctrl.focusIndex() is null then ctrl.mode() else 'focused'
+                'config': ctrl.viewConfig
                 [
                     m(
                         '.dropzone.pane'
