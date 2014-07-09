@@ -144,7 +144,7 @@ m.factory(
             window.s = self = @  # window.s for debugging
 
             @gallery = m.prop(currentGallery or new Gallery())
-            @mode = m.prop('draghover')
+            @mode = m.prop('loading')
             @modeChangeTimeout = m.prop()
             @focusIndex = m.prop(null)
 
@@ -174,6 +174,7 @@ m.factory(
                     if self.focusIndex() == index
                         index = null
                     self.focusIndex(index)
+                    self.mode(if index is null then 'grid' else 'showcase')
 
             @removeImage = (index) ->
                 ->
@@ -181,13 +182,14 @@ m.factory(
                         self.focusIndex(null)
                     img = self.gallery().images().splice(index, 1)
                     img[0].remove()
+                    self.mode('grid')
                     self.gallery().resizeImages()
 
             @dragDrop = (evt) ->
                 self.gallery().importFiles(evt.dataTransfer.files)
 
                 # We're finished dropping, go back to gallery mode to display images as they come in.
-                self.mode('album')
+                self.mode('grid')
                 return false
 
             @dragEnter = (evt) ->
@@ -199,7 +201,10 @@ m.factory(
             @dragLeave = (evt) ->
                 self.modeChangeTimeout(
                     setTimeout(
-                        -> self.mode('album')
+                        ->
+                            self.mode('grid')
+                            m.redraw()
+                            self.modeChangeTimeout(null)
                         100
                     )
                 )
@@ -230,29 +235,18 @@ m.factory(
             currentGallery.ready.then(
                 () ->
                     if currentGallery.images().length
-                        self.mode('album')
+                        self.mode('grid')
             )
 
             return @
 
         view: (ctrl) ->
             g = ctrl.gallery()
-            imgTmpl = (img, index) ->
-                if ctrl.focusIndex() is index
-                    # When focusing, maximized the image to the container
-                    if g.containerAspectRatio() < img.aspectRatio()
-                        width = g.containerWidth() - borderSize
-                        height = width / img.aspectRatio()
-                    else
-                        height = g.containerHeight() - borderSize
-                        width = height * img.aspectRatio()
-                    src = img.screenImg().src
-                    cls = 'focused'
-                else
-                    width = img.width()
-                    height = img.height()
-                    src = img.smallImg().src
-                    cls = if ctrl.focusIndex() is null then '' else 'hidden'
+
+            albumImgTmpl = (img, index) ->
+                width = img.width()
+                height = img.height()
+                src = img.smallImg().src
 
                 [
                     m(
@@ -260,18 +254,64 @@ m.factory(
                         {
                             style: "width: #{width}px; height: #{height}px"
                             src: src
-                            'class': cls
                             onclick: ctrl.toggleFocusOnImage(index)
                         }
                     )
-                    Icon('times', {'class':'remove', onclick: ctrl.removeImage(index)})
+                    # Icon('times', {'class':'remove', onclick: ctrl.removeImage(index)})
                 ]
+
+            zoomImgTmpl = (img, index) ->
+                if not img
+                    return ''
+
+                 # When focusing, maximized the image to the container
+                if g.containerAspectRatio() < img.aspectRatio()
+                    width = g.containerWidth() - borderSize
+                    height = width / img.aspectRatio()
+                else
+                    height = g.containerHeight() - borderSize
+                    width = height * img.aspectRatio()
+
+                src = img.screenImg().src
+
+                [
+                    m(
+                        '.image'
+                        [
+                            m(
+                                'img'
+                                {
+                                    style: "width: #{width}px; height: #{height}px"
+                                    src: src
+                                    onclick: ctrl.toggleFocusOnImage(index)
+                                }
+                            )
+                            m(
+                                '.button_bar'
+                                [
+                                    Icon('times', {'class':'remove', onclick: ctrl.removeImage(index)})
+                                ]
+                            )
+                        ]
+                    )
+                ]
+
 
             m(
                 '.gallery.app-canvas'
-                'class': if ctrl.focusIndex() is null then ctrl.mode() else 'focused'
+                'class': ctrl.mode()
                 'config': ctrl.viewConfig
                 [
+                    m(
+                        '.loading.pane'
+                        m(
+                            '.slate.col-md-offset-3.col-md-6.text-center'
+                            [
+                                m('h1.animated.fadeIn', [Icon('picture-o')])
+                                m('h2', ['Loading'])
+                            ]
+                        )
+                    )
                     m(
                         '.dropzone.pane'
                         ondrop: m.debubble(ctrl.dragDrop)
@@ -287,12 +327,17 @@ m.factory(
                         )
                     )
                     m(
-                        '.images.pane'
+                        '.album.pane'
+                        ondragenter: m.debubble(ctrl.dragEnter)
+                        g.images().map(albumImgTmpl)
+                    )
+                    m(
+                        '.zoomview.pane'
                         ondragenter: m.debubble(ctrl.dragEnter)
                         [
-                            m('.back', {onclick: ctrl.prevImage}, [Icon('angle-left')])
-                            g.images().map(imgTmpl)
-                            m('.forward', {onclick: ctrl.nextImage}, [Icon('angle-right')])
+                            if ctrl.focusIndex() isnt 0 then m('.back', {onclick: ctrl.prevImage}, [Icon('angle-left')]) else ''
+                            zoomImgTmpl(g.images()[ctrl.focusIndex()], ctrl.focusIndex())
+                            if ctrl.focusIndex() isnt g.images().length - 1 then m('.forward', {onclick: ctrl.nextImage}, [Icon('angle-right')]) else ''
                         ]
                     )
                 ]
