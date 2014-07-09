@@ -261,8 +261,7 @@ m.factory(
                 ]
 
             zoomImgTmpl = (img, index) ->
-                if not img
-                    return ''
+                return '' unless img
 
                  # When focusing, maximized the image to the container
                 if g.containerAspectRatio() < img.aspectRatio()
