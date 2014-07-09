@@ -9,6 +9,10 @@
         opacity: 0
         z-index: 0
 
+    .remove
+        display: none
+        z-index: 4
+
     &.draghover
         .dropzone
             opacity: 0.9
@@ -25,6 +29,29 @@
                 background-size: 100% 100%
                 margin: 2px
                 cursor: pointer
+
+                &:hover+.remove
+                    display: inline-block
+                    position: absolute
+                    top: 0.75em
+                    margin-left: -1.5em
+                    font-size: 2em
+                    color: white
+                    cursor: pointer
+                    opacity: 0.4
+                    vendor(transition, opacity .25s)
+
+            .remove:hover
+                display: inline-block
+                position: absolute
+                top: 0.75em
+                margin-left: -1.5em
+                font-size: 2em
+                color: white
+                cursor: pointer
+                opacity: 0.4
+                vendor(transition, opacity .25s)
+                opacity: 1
 
     &.focused
         .forward, .back

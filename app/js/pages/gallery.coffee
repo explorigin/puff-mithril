@@ -175,6 +175,14 @@ m.factory(
                         index = null
                     self.focusIndex(index)
 
+            @removeImage = (index) ->
+                ->
+                    if self.focusIndex() == index
+                        self.focusIndex(null)
+                    img = self.gallery().images().splice(index, 1)
+                    img[0].remove()
+                    self.gallery().resizeImages()
+
             @dragDrop = (evt) ->
                 self.gallery().importFiles(evt.dataTransfer.files)
 
@@ -231,6 +239,7 @@ m.factory(
             g = ctrl.gallery()
             imgTmpl = (img, index) ->
                 if ctrl.focusIndex() is index
+                    # When focusing, maximized the image to the container
                     if g.containerAspectRatio() < img.aspectRatio()
                         width = g.containerWidth() - borderSize
                         height = width / img.aspectRatio()
@@ -244,14 +253,19 @@ m.factory(
                     height = img.height()
                     src = img.smallImg().src
                     cls = if ctrl.focusIndex() is null then '' else 'hidden'
-                m(
-                    '.image'
-                    {
-                        style: "width: #{width}px; height: #{height}px; background-image: url(#{src})"
-                        'class': cls
-                        onclick: ctrl.toggleFocusOnImage(index)
-                    }
-                )
+
+                [
+                    m(
+                        'img.image'
+                        {
+                            style: "width: #{width}px; height: #{height}px"
+                            src: src
+                            'class': cls
+                            onclick: ctrl.toggleFocusOnImage(index)
+                        }
+                    )
+                    Icon('times', {'class':'remove', onclick: ctrl.removeImage(index)})
+                ]
 
             m(
                 '.gallery.app-canvas'
