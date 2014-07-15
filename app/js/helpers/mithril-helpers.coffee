@@ -7,7 +7,7 @@
         option[0](option[1])
 
     m.toggle = (prop) ->
-        -> (evt) prop(not prop())
+        (evt) -> prop(not prop())
 
     m.debubble = (evtHandler) ->
         (evt) ->

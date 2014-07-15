@@ -34,21 +34,23 @@ m.factory(
             document.fullscreenElement or document.webkitFullscreenElement or document.mozFullScreen or document.msFullscreenElement
 
         controller: () ->
+            self = @
             @theme = m.prop('Light')
             @verticalNav = m.prop(false)
             @showOffScreen = m.prop(false)
 
-            @closeOffScreen = =>
-                @showOffScreen(false)
+            @closeOffScreen = ->
+                self.showOffScreen(false)
                 return true
 
-            @toggleVerticalNav = =>
-                @verticalNav(not @verticalNav())
+            @setVerticalNav = (value) ->
+                ->
+                    self.verticalNav(value)
 
-                # trigger the window resize event so other parts of the page know to check for changes.
-                evt = document.createEvent('UIEvents')
-                evt.initUIEvent('resize', true, false, window, 0)
-                window.dispatchEvent(evt)
+                    # trigger the window resize event so other parts of the page know to check for changes.
+                    evt = document.createEvent('UIEvents')
+                    evt.initUIEvent('resize', true, false, window, 0)
+                    window.dispatchEvent(evt)
 
             return @
 
@@ -56,7 +58,7 @@ m.factory(
             asideClasses = [
                 cfg.THEMES[ctrl.theme()]
                 if ctrl.verticalNav() then 'nav-vertical' else null
-                if (ctrl.showOffScreen() or isFullScreen()) then 'nav-off-screen' else null
+                if ctrl.showOffScreen() then 'nav-off-screen' else null
             ].filter((c) -> c isnt null).join('.')
 
             [
@@ -64,35 +66,40 @@ m.factory(
                     m(
                         'aside#nav.' + asideClasses
                         [
-                            m('section.vbox', [
-                                m('header.nav-bar.bg-dark', [
-                                    m('a.btn.btn-link.visible-xs', {onclick: m.toggle(ctrl.showOffScreen)}, [Icon('bars')])
-                                    m('a.nav-brand', {onclick: toggleFullScreen}, ['Puff'])
-                                    m('a.btn.btn-link.visible-xs', [Icon('comment-o')])
-                                ])
-                                m('section.app-menu', [
-                                    m('nav.nav-primary.hidden-xs', [
-                                        m('ul.nav', cfg.applications.map(
-                                            (app) ->
-                                                m(
-                                                    'li'
-                                                    {
-                                                        'class': (if m.route() is app.module then 'active' else '')
-                                                    }
-                                                    [m(
-                                                        "a[href=##{app.module}]"
-                                                        onclick: ctrl.closeOffScreen
-                                                        [Icon(app.icon), m('span', [app.name])])]
+                            m(
+                                'section.vbox'
+                                # onmouseover: ctrl.setVerticalNav(false)
+                                # onmouseout: ctrl.setVerticalNav(true)
+                                [
+                                    m('header.nav-bar.bg-dark', [
+                                        m('a.btn.btn-link.visible-xs', {onclick: m.toggle(ctrl.showOffScreen)}, [Icon('bars')])
+                                        m('a.nav-brand', ['Puff'])
+                                        m('a.btn.btn-link.visible-xs', [Icon('comment-o')])
+                                    ])
+                                    m('section.app-menu', [
+                                        m('nav.nav-primary.hidden-xs', [
+                                            m('ul.nav', cfg.applications.map(
+                                                (app) ->
+                                                    m(
+                                                        'li'
+                                                        {
+                                                            'class': (if m.route() is app.module then 'active' else '')
+                                                        }
+                                                        [m(
+                                                            "a[href=##{app.module}]"
+                                                            onclick: ctrl.closeOffScreen
+                                                            [Icon(app.icon), m('span', [app.name])])]
+                                                    )
                                                 )
                                             )
-                                        )
+                                        ])
                                     ])
-                                ])
-                                m('footer.hidden-xs', [
-                                    m('a.btn.btn-link', {onclick: ctrl.toggleVerticalNav}, [Icon('bars')])
-                                    m('a.btn.btn-link.pull-right', {href: cfg.pages.login}, [Icon('power-off')])
-                                ])
-                            ])
+                                    m('footer.hidden-xs', [
+                                        m('a.btn.btn-link', {onclick: toggleFullScreen}, [Icon('expand')])
+                                        m('a.btn.btn-link.pull-right', {href: cfg.pages.login}, [Icon('power-off')])
+                                    ])
+                                ]
+                            )
                         ]
                     )
                     m('main#content')
