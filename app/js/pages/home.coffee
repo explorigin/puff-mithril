@@ -2,12 +2,11 @@ m.factory(
     'pages.home',
     [
         'application.config'
+        'application.signals'
         'helpers.icon'
     ]
-    (cfg, Icon) ->
-
-        PubSub.subscribe(
-            'REQUEST_FULLSCREEN',
+    (cfg, Signals, Icon) ->
+        Signals.fullscreen.requested.add(
             ->
                 for attr in ['requestFullscreen', 'webkitRequestFullscreen', 'mozRequestFullScreen', 'msRequestFullscreen']
                     if typeof document.body[attr] is 'function'
@@ -16,8 +15,7 @@ m.factory(
                 return null
         )
 
-        PubSub.subscribe(
-            'CANCEL_FULLSCREEN',
+        Signals.fullscreen.cancelled.add(
             ->
                 for attr in ['exitFullscreen', 'webkitExitFullscreen', 'mozCancelFullScreen', 'msExitFullscreen']
                     if typeof document[attr] is 'function'
@@ -27,14 +25,10 @@ m.factory(
         )
 
         toggleFullScreen = ->
-            # Must run sync to work with Mozilla's security
             m.startComputation()
-            PubSub.publishSync(if isFullScreen() then 'CANCEL_FULLSCREEN' else 'REQUEST_FULLSCREEN')
-            setTimeout(
-                ->
-                    m.endComputation()
-                0
-            )
+            signal = if isFullScreen() then Signals.fullscreen.cancelled else Signals.fullscreen.requested
+            signal.dispatch()
+            setTimeout((-> m.endComputation()), 0)
 
         isFullScreen = ->
             document.fullscreenElement or document.webkitFullscreenElement or document.mozFullScreen or document.msFullscreenElement
