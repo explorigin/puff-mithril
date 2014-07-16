@@ -68,6 +68,7 @@ m.factory(
                         [
                             m(
                                 'section.vbox'
+                                # FIXME - default mode should be smaller and mouseover should expand it without resizing the content section
                                 # onmouseover: ctrl.setVerticalNav(false)
                                 # onmouseout: ctrl.setVerticalNav(true)
                                 [

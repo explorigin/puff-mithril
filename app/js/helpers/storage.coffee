@@ -13,7 +13,12 @@ m.factory(
                     revMap[result.id] = result.rev
                 d.resolve(result)
 
-        API = (db) ->
+        API = (db, worker) ->
+            workerJobs =
+                info: {}
+                create: {}
+                updateAttachment: {}
+
             subscriptions =
                 account:
                     signup: {}
@@ -41,6 +46,48 @@ m.factory(
                         d.resolve(result._rev)
                 )
                 d.promise
+
+            postMessage = (action, id, packet) ->
+                d = m.deferred()
+                workerJobs[action][id] = d
+
+                if packet.action isnt action
+                    packet.action = action
+                if packet.id isnt id
+                    packet.id = id
+
+                worker.postMessage(packet)
+                return d.promise
+
+            receiveMessage = (msg) ->
+                data = msg.data
+                if data.error
+                    action = 'reject'
+                    response = data.error
+                else
+                    action = 'resolve'
+                    response = data
+
+                try
+                    workerJobs[data.action][data.id][action](response)
+                catch e
+                    console.log('Receive ERROR')
+                    console.log(e, msg)
+
+            if worker
+                worker.addEventListener('message', receiveMessage, false)
+                db.info(
+                    (err, info) ->
+                        postMessage('create', 0, {db: info.db_name}).then(
+                            ->
+                                console.log(arguments)
+                                # TODO - when we fully support workers, close the db on this end.
+                                # db.close()
+                            (err) ->
+                                console.log("Storage warning: no worker support for #{info.db_name}. ERROR: #{err}");
+                                worker = null
+                        )
+                )
 
             @account =
                 signUp: (username, password) ->
@@ -105,10 +152,20 @@ m.factory(
                     put = (rev) ->
                         db.putAttachment(docId, attId, rev, attachment, mimetype, handleResponse(d))
 
-                    if not rev
-                        populateRev(docId).then(put, (err) -> d.reject(err))
+                    if worker
+                        d.reject()
+                        return postMessage(
+                            'updateAttachment',
+                            docId,
+                            attId: attId
+                            attachment: attachment,
+                            mimetype: mimetype
+                        )
                     else
-                        put(rev)
+                        if not rev
+                            populateRev(docId).then(put, (err) -> d.reject(err))
+                        else
+                            put(rev)
 
                     d.promise
                 getAttachment: (docId, attachmentId) ->
@@ -175,7 +232,13 @@ m.factory(
         API.prototype.IDENTIFIER_KEYS = ['_id', '_rev']
 
         (databaseUri) ->
-            if databaseUri not in dbCache
-                dbCache[databaseUri] = new API(new PouchDB(databaseUri))
+            if dbCache[databaseUri] is undefined
+                try
+                    worker = new Worker('./js/helpers/storage-worker.js')
+                catch e
+                    console.log("Storage warning: no worker support for #{databaseUri}", e);
+                    worker = null
+
+                dbCache[databaseUri] = new API(new PouchDB(databaseUri), worker)
             return dbCache[databaseUri]
 )
