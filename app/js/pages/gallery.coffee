@@ -236,6 +236,9 @@ m.factory(
                 () ->
                     if currentGallery.images().length
                         self.mode('grid')
+                    else
+                        self.mode('draghover')
+                    m.redraw()
             )
 
             return @
