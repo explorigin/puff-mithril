@@ -31,6 +31,7 @@
         <script src="js/models/image.js"></script>
         <script src="js/pages/gallery.js"></script>
         <script src="js/pages/files.js"></script>
+        <script src="js/pages/notes.js"></script>
         <script src="js/pages/home.js"></script>
         <script src="js/signals.js"></script>
         <script src="js/config.js"></script>
@@ -50,7 +51,8 @@
                     m.route.mode = 'hash';
                     m.route(document.getElementById('content'), "", {
                         "": m.handle('pages.files'),
-                        "gallery": m.handle('pages.gallery')
+                        "gallery": m.handle('pages.gallery'),
+                        "laverna": m.handle('pages.notes')
                     });
                 }, 0);
             });

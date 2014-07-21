@@ -26,16 +26,16 @@ m.factory(
                 icon: 'picture-o'
                 query: null
                 module: 'gallery'
-            }, {
-                name: 'Invoice'
-                icon: 'book'
-                query: null
-                module: 'invoice'
-            }, {
-                name: 'Messages'
-                icon: 'envelope-o'
-                query: null
-                module: 'messages'
+            # }, {
+            #     name: 'Invoice'
+            #     icon: 'book'
+            #     query: null
+            #     module: 'invoice'
+            # }, {
+            #     name: 'Messages'
+            #     icon: 'envelope-o'
+            #     query: null
+            #     module: 'messages'
             }
         ]
         THEMES:
