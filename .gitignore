@@ -1,5 +1,4 @@
 build
 dist
-.bowerrc
 app/bower_components
 node_modules

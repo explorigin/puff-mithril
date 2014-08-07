@@ -21,7 +21,7 @@
     "app/bower_components"
   ],
   "dependencies": {
-    "mithril": "~0.1.18",
+    "mithril": "~0.1.19",
     "animate.css": "~3.1.1",
     "font-awesome": "~4.0.3",
     "bootstrap": "~3.1.1",
