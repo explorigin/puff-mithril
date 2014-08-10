@@ -1,0 +1,14 @@
+var gulp = require('gulp'),
+    manifest = require('gulp-manifest');
+
+gulp.task('manifest', ['dist-html', 'dist-styles', 'dist-scripts', 'dist-images'], function(){
+    return gulp.src(['dist/**/*'])
+        .pipe(manifest({
+            hash: true,
+            preferOnline: true,
+            network: ['https://*', '*'],
+            filename: 'app.manifest',
+            exclude: 'app.manifest'
+        }))
+        .pipe(gulp.dest('dist'));
+});

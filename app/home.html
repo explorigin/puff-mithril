@@ -7,35 +7,13 @@
         <meta name="description" content="A personal cloud-space">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <!-- build:css -->
-        <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
-        <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css">
-        <link rel="stylesheet" href="bower_components/animate.css/animate.css">
-        <link rel="stylesheet" href="css/home.css">
-        <!-- endbuild -->
-        <!-- build:js -->
-        <script src="bower_components/js-signals/dist/signals.js"></script>
-        <script src="bower_components/lodash/dist/lodash.js"></script>
-        <script src="bower_components/pouchdb/dist/pouchdb-nightly.js"></script>
-        <script src="bower_components/mithril/mithril.js"></script>
-        <script src="js/external/di.mithril.js"></script>
-        <script src="js/external/progress.deferred.mithril.js"></script>
-        <script src="js/external/wrapped.prop.mithril.js"></script>
-        <script src="js/external/linear_partition.js"></script>
-        <script src="js/external/md5-jkm.js"></script>
-        <script src="js/helpers/mithril-helpers.js"></script>
-        <script src="js/helpers/storage.js"></script>
-        <script src="js/helpers/icon.js"></script>
-        <script src="js/helpers/photo-utils.js"></script>
-        <script src="js/components/progressbar.js"></script>
-        <script src="js/models/image.js"></script>
-        <script src="js/pages/gallery.js"></script>
-        <script src="js/pages/files.js"></script>
-        <script src="js/pages/notes.js"></script>
-        <script src="js/pages/home.js"></script>
-        <script src="js/signals.js"></script>
-        <script src="js/config.js"></script>
-        <!-- endbuild -->
+        <link rel="stylesheet" href="vendor/css/bootstrap.css">
+        <link rel="stylesheet" href="vendor/css/font-awesome.css">
+        <link rel="stylesheet" href="vendor/animate.css">
+        <link rel="stylesheet" href="home.css">
+
+        <script src="commons.bundle.js"></script>
+        <script src="home.bundle.js"></script>
     </head>
     <body>
         <noscript>
@@ -43,19 +21,5 @@
                 You're seeing this message because Javascript is turned off.  This page without Javascript is just as music with no audience.
             </p>
         </noscript>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                m.module(document.body, m.handle('pages.home'))
-
-                setTimeout(function() {
-                    m.route.mode = 'hash';
-                    m.route(document.getElementById('content'), "", {
-                        "": m.handle('pages.files'),
-                        "gallery": m.handle('pages.gallery'),
-                        "laverna": m.handle('pages.notes')
-                    });
-                }, 0);
-            });
-        </script>
     </body>
 </html>

@@ -1,0 +1,59 @@
+@import 'libs/core'
+
+elementHeight = 275px
+elementWidth = 500px
+
+.floater
+    position: relative
+    float: left
+    height: 50%
+    margin-bottom: -(elementHeight/2)
+    width: 100%
+
+.centered
+    position: relative
+    clear: left
+    height: elementHeight
+    width: elementWidth
+    margin: 0 auto
+    background: #fff
+
+.login
+    .form-group
+        margin-right: 4px
+
+        &:last-child
+            margin-right: inherit
+            float: right
+
+    .panel
+        border-radius: 2px
+        border-color: #EBEFF6
+
+    .panel, #content
+        background-color: transparent
+        box-shadow: none
+        border: 0px
+
+footer
+    position: absolute
+    bottom:10px
+    right:10px
+
+    a, a:link, a:visited
+        text-decoration: none
+        color: lightgray
+
+    ul li
+        list-style: none
+
+/* ==========================================================================
+   Browse Happy prompt
+   ========================================================================== */
+
+.browsehappy
+    margin: 0.2em 0
+    background: #ccc
+    color: #000
+    padding: 0.2em 0
+

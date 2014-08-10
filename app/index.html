@@ -7,26 +7,13 @@
         <meta name="description" content="A personal cloud-space">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <!-- build:css -->
-        <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
-        <link rel="stylesheet" href="bower_components/animate.css/animate.css">
-        <link rel="stylesheet" href="css/core.css">
-        <link rel="stylesheet" href="css/index.css">
-        <!-- endbuild -->
-        <!-- build:js -->
-        <script src="bower_components/mithril/mithril.js"></script>
-        <script src="js/external/di.mithril.js"></script>
-        <script src="js/helpers/mithril-helpers.js"></script>
-        <script src="js/helpers/storage.js"></script>
-        <script src="js/helpers/icon.js"></script>
-        <script src="js/helpers/button.js"></script>
-        <script src="js/helpers/submit.js"></script>
-        <script src="js/helpers/input.js"></script>
-        <script src="js/components/panel.js"></script>
-        <script src="js/components/form.js"></script>
-        <script src="js/pages/index.js"></script>
-        <script src="js/config.js"></script>
-        <!-- endbuild -->
+        <link rel="stylesheet" href="vendor/css/bootstrap.css">
+        <link rel="stylesheet" href="vendor/css/font-awesome.css">
+        <link rel="stylesheet" href="vendor/animate.css">
+        <link rel="stylesheet" href="index.css">
+
+        <script src="commons.bundle.js"></script>
+        <script src="index.bundle.js"></script>
     </head>
     <body>
         <noscript>
@@ -40,6 +27,5 @@
                 Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.
             </p>
         <![endif]-->
-        <script>document.addEventListener('DOMContentLoaded', function() {m.module(document.body, m.handle('pages.index'))});</script>
     </body>
 </html>
