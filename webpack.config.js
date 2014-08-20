@@ -35,7 +35,7 @@ module.exports = {
     },
     plugins: [
         new webpack.optimize.CommonsChunkPlugin('commons.bundle.js'),
-        new webpack.optimize.UglifyJsPlugin({})
+//        new webpack.optimize.UglifyJsPlugin({})
     ],
     devtool: 'source-map'
 }
