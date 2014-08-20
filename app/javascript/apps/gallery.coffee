@@ -251,15 +251,13 @@ m.factory(
 
             currentGallery.ready.then(
                 () ->
-                    console.log('success')
                     if currentGallery.images().length
                         self.mode('grid')
                     else
                         self.mode('draghover')
                     m.redraw()
-                () ->
-                    console.log('error')
-
+                (err) ->
+                    console.log('Error: ' + err)
             )
 
             return @

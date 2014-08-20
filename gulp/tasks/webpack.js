@@ -7,6 +7,8 @@ var gulp   = require('gulp'),
 if (global.isWatching) {
     config.debug = true;
     config.watch = true;
+    // Exclude the UglifyJS plugin when developing.
+    config.plugins.splice(1, 1);
 }
 
 gulp.task('webpack', function(done) {

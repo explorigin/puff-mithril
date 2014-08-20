@@ -1,4 +1,4 @@
-importScripts('vendor/pouchdb-nightly.js')
+importScripts('vendor/pouchdb.min.js')
 
 db = null
 

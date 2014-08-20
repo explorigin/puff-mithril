@@ -11,7 +11,7 @@ require('apps/notes')
 
 
 m.factory(
-    'pages.home',
+    'layout',
     [
         'application.config'
         'application.signals'
@@ -45,98 +45,97 @@ m.factory(
         isFullScreen = ->
             document.fullscreenElement or document.webkitFullscreenElement or document.mozFullScreen or document.msFullscreenElement
 
-        controller: () ->
-            self = @
-            @theme = m.prop('Light')
-            @verticalNav = m.prop(false)
-            @showOffScreen = m.prop(false)
+        controller: (bodyCtrl) ->
+            ->
+                self = @
+                @theme = m.prop('Light')
+                @verticalNav = m.prop(false)
+                @showOffScreen = m.prop(false)
 
-            @closeOffScreen = ->
-                self.showOffScreen(false)
-                return true
+                @closeOffScreen = ->
+                    self.showOffScreen(false)
+                    return true
 
-            @setVerticalNav = (value) ->
-                ->
-                    self.verticalNav(value)
+                @setVerticalNav = (value) ->
+                    ->
+                        self.verticalNav(value)
 
-                    # trigger the window resize event so other parts of the page know to check for changes.
-                    evt = document.createEvent('UIEvents')
-                    evt.initUIEvent('resize', true, false, window, 0)
-                    window.dispatchEvent(evt)
+                        # trigger the window resize event so other parts of the page know to check for changes.
+                        evt = document.createEvent('UIEvents')
+                        evt.initUIEvent('resize', true, false, window, 0)
+                        window.dispatchEvent(evt)
 
-            return @
+                @body = bodyCtrl()
 
-        view: (ctrl) ->
-            asideClasses = [
-                cfg.THEMES[ctrl.theme()]
-                if ctrl.verticalNav() then 'nav-vertical' else null
-                if ctrl.showOffScreen() then 'nav-off-screen' else null
-            ].filter((c) -> c isnt null).join('.')
+                return @
 
-            [
-                m('section.hbox.stretch', [
-                    m(
-                        'aside#nav.' + asideClasses
-                        [
-                            m(
-                                'section.vbox'
-                                # FIXME - default mode should be smaller and mouseover should expand it without resizing the content section
-                                # onmouseover: ctrl.setVerticalNav(false)
-                                # onmouseout: ctrl.setVerticalNav(true)
-                                [
-                                    m('header.nav-bar.bg-dark', [
-                                        m('a.btn.btn-link.visible-xs', {onclick: m.toggle(ctrl.showOffScreen)}, [Icon('bars')])
-                                        m('a.nav-brand', ['Puff'])
-                                        m('a.btn.btn-link.visible-xs', [Icon('comment-o')])
-                                    ])
-                                    m('section.app-menu', [
-                                        m('nav.nav-primary.hidden-xs', [
-                                            m('ul.nav', cfg.applications.map(
-                                                (app) ->
-                                                    m(
-                                                        'li'
-                                                        {
-                                                            'class': (if m.route() is app.module then 'active' else '')
-                                                        }
-                                                        [m(
-                                                            "a[href=##{app.module}]"
-                                                            onclick: ctrl.closeOffScreen
-                                                            [Icon(app.icon), m('span', [app.name])])]
+        view: (body) ->
+            (ctrl) ->
+                asideClasses = [
+                    cfg.THEMES[ctrl.theme()]
+                    if ctrl.verticalNav() then 'nav-vertical' else null
+                    if ctrl.showOffScreen() then 'nav-off-screen' else null
+                ].filter((c) -> c isnt null).join('.')
+
+                [
+                    m('section.hbox.stretch', [
+                        m(
+                            'aside#nav.' + asideClasses
+                            [
+                                m(
+                                    'section.vbox'
+                                    # FIXME - default mode should be smaller and mouseover should expand it without resizing the content section
+                                    # onmouseover: ctrl.setVerticalNav(false)
+                                    # onmouseout: ctrl.setVerticalNav(true)
+                                    [
+                                        m('header.nav-bar.bg-dark', [
+                                            m('a.btn.btn-link.visible-xs', {onclick: m.toggle(ctrl.showOffScreen)}, [Icon('bars')])
+                                            m('a.nav-brand', ['Puff'])
+                                            m('a.btn.btn-link.visible-xs', [Icon('comment-o')])
+                                        ])
+                                        m('section.app-menu', [
+                                            m('nav.nav-primary.hidden-xs', [
+                                                m('ul.nav', cfg.applications.map(
+                                                    (app) ->
+                                                        m(
+                                                            'li'
+                                                            {
+                                                                'class': (if m.route() is app.module then 'active' else '')
+                                                            }
+                                                            [m(
+                                                                "a[href=##{app.module}]"
+                                                                onclick: ctrl.closeOffScreen
+                                                                [Icon(app.icon), m('span', [app.name])])]
+                                                        )
                                                     )
                                                 )
-                                            )
+                                            ])
                                         ])
-                                    ])
-                                    m('footer.hidden-xs', [
-                                        m('a.btn.btn-link', {onclick: toggleFullScreen}, [Icon('expand')])
-                                        m('a.btn.btn-link.pull-right', {href: cfg.pages.login}, [Icon('power-off')])
-                                    ])
-                                ]
-                            )
-                        ]
-                    )
-                    m('main#content')
-                ])
-            ]
+                                        m('footer.hidden-xs', [
+                                            m('a.btn.btn-link', {onclick: toggleFullScreen}, [Icon('expand')])
+                                            m('a.btn.btn-link.pull-right', {href: cfg.pages.login}, [Icon('power-off')])
+                                        ])
+                                    ]
+                                )
+                            ]
+                        )
+                        m('main#content', body(ctrl.body))
+                    ])
+                ]
 )
 
 document.addEventListener(
     'DOMContentLoaded'
     ->
-        m.module(document.body, m.handle('pages.home'))
+        m.route.mode = 'hash'
 
-        setTimeout(
-            ->
-                m.route.mode = 'hash'
-                m.route(
-                    document.getElementById('content')
-                    ""
-                    {
-                        "": m.handle('apps.files')
-                        "gallery": m.handle('apps.gallery')
-                        "laverna": m.handle('apps.notes')
-                    }
-                )
-            0
+        m.route(
+            document.body
+            ""
+            {
+                "": m.mixinLayout(m.handle('layout'), m.handle('apps.files'))
+                "gallery": m.mixinLayout(m.handle('layout'), m.handle('apps.gallery'))
+                "laverna": m.mixinLayout(m.handle('layout'), m.handle('apps.notes'))
+            }
         )
 )

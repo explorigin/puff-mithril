@@ -15,7 +15,7 @@ gulp.task('copy', ['styles'], function() {
 var assets = [
     'app/bower_components/animate.css/animate.css',
     'app/bower_components/bootstrap/dist/**',
-    'app/bower_components/pouchdb/dist/pouchdb-nightly.js',
+    'app/bower_components/pouchdb/dist/pouchdb.min.js',
     'app/bower_components/font-awesome/**'
 ];
 

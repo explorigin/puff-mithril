@@ -1,6 +1,6 @@
 # helpers/storage.js
 require('mithril')
-PouchDB = require('pouchdb/dist/pouchdb-nightly.min.js')  #  Separate so the worker can access it.
+PouchDB = require('pouchdb/dist/pouchdb.min.js')  #  Separate so the worker can access it.
 StorageWorker = require('worker!helpers/storage-worker')
 
 m.factory(

@@ -21,4 +21,10 @@ require('mithril')
             finally
                 m.endComputation()
 
+    m.mixinLayout = (layoutModule, contentModule) ->
+        controller:
+            layoutModule.controller(contentModule.controller)
+        view:
+            layoutModule.view(contentModule.view)
+
 )(Mithril)
