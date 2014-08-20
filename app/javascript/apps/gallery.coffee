@@ -45,7 +45,7 @@ m.factory(
             @containerHeight = -> if self.container() then self.container().clientHeight else 0
             @containerAspectRatio = -> if self.container() then self.containerWidth() / self.containerHeight() else 1
 
-            @optimalImageHeight = -> self.containerHeight() * @optimalImageHeightRatio()
+            @optimalImageHeight = -> window.screen.height * @optimalImageHeightRatio()
 
             @totalOptimalImageWidth = ->
                 optimalHeight = @optimalImageHeight()
