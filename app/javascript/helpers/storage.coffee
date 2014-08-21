@@ -18,10 +18,8 @@ m.factory(
                 d.resolve(result)
 
         API = (db, worker) ->
-            workerJobs =
-                info: {}
-                create: {}
-                updateAttachment: {}
+            readyDeferred = m.deferred()
+            workerJobs = {}
 
             subscriptions =
                 account:
@@ -53,6 +51,9 @@ m.factory(
 
             postMessage = (action, id, packet) ->
                 d = m.deferred()
+
+                if workerJobs[action] is undefined
+                    workerJobs[action] = {}
                 workerJobs[action][id] = d
 
                 if packet.action isnt action
@@ -70,7 +71,7 @@ m.factory(
                     response = data.error
                 else
                     action = 'resolve'
-                    response = data
+                    response = data.result
 
                 try
                     workerJobs[data.action][data.id][action](response)
@@ -87,11 +88,15 @@ m.factory(
                                 console.log(arguments)
                                 # TODO - when we fully support workers, close the db on this end.
                                 # db.close()
+                                readyDeferred.resolve()
                             (err) ->
                                 console.log("Storage warning: no worker support for #{info.db_name}. ERROR: #{err}");
                                 worker = null
+                                readyDeferred.resolve()
                         )
                 )
+            else
+                readyDeferred.resolve()
 
             @account =
                 signUp: (username, password) ->
@@ -131,11 +136,28 @@ m.factory(
                     subscriptions.account[evtName][id] = callback
 
             @store =
+                _db: db
+                registerView: (obj) ->
+                    m.sync(
+                        Object.keys(obj).map(
+                            (key) ->
+                                data = {}
+                                data[key] = {'map': obj[key]}
+
+                                db.put(
+                                    _id: "_design/#{key}"
+                                    language: 'javascript'
+                                    views: data
+                                )
+                        )
+                    )
+
                 add: (type, obj) ->
                     d = m.deferred()
                     obj.type = type
                     db.post(obj, handleResponse(d))
                     d.promise
+
                 update: (type, docId, obj) ->
                     d = m.deferred()
                     rev = revMap[docId]
@@ -154,13 +176,24 @@ m.factory(
                     d = m.deferred()
                     rev = revMap[docId]
                     put = (rev) ->
-                        db.putAttachment(docId, attId, rev, attachment, mimetype, handleResponse(d))
+                        if worker
+                            postMessage(
+                                'updateAttachment',
+                                docId,
+                                rev: rev
+                                attId: attId
+                                attachment: attachment,
+                                mimetype: mimetype
+                            ).then(d.resolve)
+                        else
+                            db.putAttachment(docId, attId, rev, attachment, mimetype, handleResponse(d))
 
                     if worker
                         d.reject()
                         return postMessage(
                             'updateAttachment',
                             docId,
+                            rev: rev
                             attId: attId
                             attachment: attachment,
                             mimetype: mimetype
@@ -174,6 +207,9 @@ m.factory(
                     d.promise
                 getAttachment: (docId, attachmentId) ->
                     d = m.deferred()
+                    if worker
+                        d.reject()
+                        return postMessage('getAttachment', docId, {attachmentId:attachmentId})
                     db.getAttachment(docId, attachmentId, handleResponse(d))
                     d.promise
                 removeAttachment: (docId, attachmentId) ->
@@ -194,10 +230,12 @@ m.factory(
                     d.promise
                 findAll: (type) ->
                     d = m.deferred()
-                    map = (doc, emit) ->
-                        if doc.type is type
-                            emit(null, doc)
-                    db.query(map, {attachments:true}, handleResponse(d))
+
+                    if worker
+                        d.reject()
+                        return postMessage('findAll', type, {type:type})
+
+                    db.query('by_type', {key: [type], attachments:true}, handleResponse(d))
                     d.promise
                 remove: (type, docId) ->
                     d = m.deferred()
@@ -231,19 +269,21 @@ m.factory(
                     id = generateId()
                     subscriptions.account[evtName][id] = callback
 
+
+            @store.registerView({"by_type": "function(doc) { emit([doc.type], doc); }"})
+
+            @ready = readyDeferred.promise
             return @
 
         API.prototype.IDENTIFIER_KEYS = ['_id', '_rev']
 
         (databaseUri) ->
             if dbCache[databaseUri] is undefined
-                # try
-                #     worker = new StorageWorker();
-                # catch e
-                #     console.log("Storage warning: no worker support for #{databaseUri}", e);
-                #     worker = null
-
-                worker = null
+                try
+                    worker = new StorageWorker();
+                catch e
+                    console.log("Storage warning: no worker support for #{databaseUri}", e);
+                    worker = null
 
                 dbCache[databaseUri] = new API(new PouchDB(databaseUri), worker)
             return dbCache[databaseUri]

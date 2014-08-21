@@ -1,29 +1,39 @@
 importScripts('vendor/pouchdb.min.js')
 
-db = null
+self.db = null
+
+handleResponse = (err, result) ->
+    if err
+        self.postMessage(
+            action: data.action
+            error: err
+            id: data.id
+        )
+    else
+        self.postMessage(
+            action: data.action
+            result: result
+            id: data.id
+        )
 
 onmessage = (evt) ->
     data = evt.data
 
-    handleResponse = (err, result) ->
-        if err
-            self.postMessage(
-                action: data.action
-                error: err
-                id: data.id
-            )
-        else
-            self.postMessage(
-                action: data.action
-                result: result
-                id: data.id
-            )
-
     switch data.action
         when 'create'
-            db = new PouchDB(data.db)
-            db.info(handleResponse)
+            self.db = new PouchDB(data.db)
+            self.db.info(handleResponse)
+
+        when 'findAll'
+            self.db.query('by_type', {key: [data.type], attachments:true}, handleResponse)
+
+        when 'updateAttachment'
+            db.putAttachment(data.id, data.attId, data.rev, data.attachment, data.mimetype, handleResponse)
+
+        when 'getAttachment'
+            db.getAttachment(data.id, data.attachmentId, handleResponse)
+
         else
-            handleResponse(new Error('Not Implemented'))
+            handleResponse('Not Implemented')
 
 self.addEventListener('message', onmessage, false)

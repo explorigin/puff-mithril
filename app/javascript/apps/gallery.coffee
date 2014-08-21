@@ -143,12 +143,16 @@ m.factory(
             # Initialization Processing
             resolveIt = ->
                 _ready.resolve(self)
-            db.store.findAll('image').then(
-                (result) ->
-                    if not result.rows.length
-                        return resolveIt()
-                    importImages(result.rows.map((r) -> r.value)).then(resolveIt, resolveIt)
-                resolveIt
+
+            db.ready.then(
+                ->
+                    db.store.findAll('image').then(
+                        (result) ->
+                            if not result.rows.length
+                                return resolveIt()
+                            importImages(result.rows.map((r) -> r.value)).then(resolveIt, resolveIt)
+                        resolveIt
+                    )
             )
 
             return @
