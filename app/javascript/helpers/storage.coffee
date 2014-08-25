@@ -9,17 +9,105 @@ m.factory(
         dbCache = {}
         revMap = {}
 
-        handleResponse = (d) ->
+        handleResponse = (deferred) ->
             (err, result) ->
                 if err
-                    return d.reject(err)
+                    console.log(err)
+                    return deferred.reject(err)
                 else if result.id and result.rev
                     revMap[result.id] = result.rev
-                d.resolve(result)
+                deferred.resolve(result)
 
-        API = (db, worker) ->
-            readyDeferred = m.deferred()
-            workerJobs = {}
+        # WorkerProxy = (databaseUri) ->
+        #     self = @
+
+        #     worker = new StorageWorker()
+        #     uniqueID = 0
+        #     workerJobs = {create:{}}
+        #     readyDeferred = m.deferred()
+        #     @ready = readyDeferred.promise
+        #     queue = []
+
+        #     _commands = [
+        #         'post'
+        #         'put'
+        #         'query'
+        #         'remove'
+        #         'getAttachment'
+        #         'putAttachment'
+        #         'removeAttachment'
+        #         'create'
+        #         'info'
+        #     ]
+
+        #     _postMessage = (action, args) ->
+        #         deferred = m.deferred()
+        #         id = uniqueID++
+
+        #         if workerJobs[action] is undefined
+        #             workerJobs[action] = {}
+        #         workerJobs[action][id] = deferred
+
+        #         packet = {
+        #             action: action
+        #             id: id
+        #             args: args
+        #         }
+
+        #         if self.ready()
+        #             console.log("Posting: ", packet)
+        #             worker.postMessage(packet)
+        #         else
+        #             console.log("Queuing: ", packet)
+        #             queue.push(packet)
+
+        #         return deferred.promise
+
+        #     _receiveMessage = (msg) ->
+        #         data = msg.data
+        #         console.log("Received: ", data)
+
+        #         if data.log
+        #             try
+        #                 console.log('Worker log: ', JSON.parse(data.log))
+        #             catch e
+        #                 console.log(data.log)
+        #             return
+
+        #         if data.error
+        #             action = 'reject'
+        #             response = data.error
+        #         else
+        #             action = 'resolve'
+        #             response = data.result
+
+        #         try
+        #             workerJobs[data.action][data.id][action](response)
+        #         catch e
+        #             console.log('Receive ERROR')
+        #             console.log(e)
+        #             console.log(e.stack)
+        #             console.log(msg)
+        #         delete workerJobs[data.action][data.id]
+
+        #     _commands.forEach(
+        #         (cmd) ->
+        #             self[cmd] = -> _postMessage(cmd, arguments)
+        #     )
+
+        #     worker.addEventListener('message', _receiveMessage, false)
+        #     worker.onerror = (e) ->
+        #         throw new Error(e)
+
+        #     workerJobs['create'][uniqueID] = readyDeferred
+        #     packet = {action:'create', id:uniqueID++, args:databaseUri + '-worker'}
+        #     console.log("Initial Posting: ", packet)
+        #     worker.postMessage(packet)
+
+        #     return @
+
+        API = (database) ->
+            db = database
 
             subscriptions =
                 account:
@@ -39,70 +127,31 @@ m.factory(
                     remove: {}
                     change: {}
 
+            subscriberFactory = (part) ->
+                (evtName, callback) ->
+                    if subscriptions[part][evtName] is undefined
+                        throw new Error("No such event \"#{evtName}\"")
+
+                    id = generateId()
+                    subscriptions[part][evtName][id] = callback
+
+            notImplemented = ->
+                deferred = m.deferred()
+                deferred.reject({msg: 'Not Implemented'})
+                deferred.promise
+
             populateRev = (docId, saveRev = true) ->
-                d = m.deferred()
+                deferred = m.deferred()
                 db.get(
                     docId
                     (err, result) ->
                         revMap[docId] = result._rev unless saveRev isnt true
-                        d.resolve(result._rev)
+                        deferred.resolve(result._rev)
                 )
-                d.promise
-
-            postMessage = (action, id, packet) ->
-                d = m.deferred()
-
-                if workerJobs[action] is undefined
-                    workerJobs[action] = {}
-                workerJobs[action][id] = d
-
-                if packet.action isnt action
-                    packet.action = action
-                if packet.id isnt id
-                    packet.id = id
-
-                worker.postMessage(packet)
-                return d.promise
-
-            receiveMessage = (msg) ->
-                data = msg.data
-                if data.error
-                    action = 'reject'
-                    response = data.error
-                else
-                    action = 'resolve'
-                    response = data.result
-
-                try
-                    workerJobs[data.action][data.id][action](response)
-                catch e
-                    console.log('Receive ERROR')
-                    console.log(e, msg)
-
-            if worker
-                worker.addEventListener('message', receiveMessage, false)
-                db.info(
-                    (err, info) ->
-                        postMessage('create', 0, {db: info.db_name}).then(
-                            ->
-                                console.log(arguments)
-                                # TODO - when we fully support workers, close the db on this end.
-                                # db.close()
-                                readyDeferred.resolve()
-                            (err) ->
-                                console.log("Storage warning: no worker support for #{info.db_name}. ERROR: #{err}");
-                                worker = null
-                                readyDeferred.resolve()
-                        )
-                )
-            else
-                readyDeferred.resolve()
+                deferred.promise
 
             @account =
-                signUp: (username, password) ->
-                     d = m.deferred()
-                     d.reject({msg: 'Not Implemented'})
-                     d.promise
+                signUp: notImplemented
                 signIn: (username, password) ->
                      d = m.deferred()
                      d.resolve(true)
@@ -111,32 +160,14 @@ m.factory(
                      d = m.deferred()
                      d.resolve(true)
                      d.promise
-                changePassword: (password, newPassword) ->
-                     d = m.deferred()
-                     d.reject({msg: 'Not Implemented'})
-                     d.promise
-                changeUsername: (password, newUsername) ->
-                     d = m.deferred()
-                     d.reject({msg: 'Not Implemented'})
-                     d.promise
-                resetPassword: (username) ->
-                     d = m.deferred()
-                     d.reject({msg: 'Not Implemented'})
-                     d.promise
-                destroy: () ->
-                     d = m.deferred()
-                     d.reject({msg: 'Not Implemented'})
-                     d.promise
+                changePassword: notImplemented
+                changeUsername: notImplemented
+                resetPassword: notImplemented
+                destroy: notImplemented
                 username: m.prop(null)
-                on: (evtName, callback) ->
-                    if subscriptions.account[evtName] is undefined
-                        throw new Error("No such event \"#{evtName}\"")
-
-                    id = generateId()
-                    subscriptions.account[evtName][id] = callback
+                on:  subscriberFactory('account')
 
             @store =
-                _db: db
                 registerView: (obj) ->
                     m.sync(
                         Object.keys(obj).map(
@@ -176,29 +207,8 @@ m.factory(
                     d = m.deferred()
                     rev = revMap[docId]
                     put = (rev) ->
-                        if worker
-                            postMessage(
-                                'updateAttachment',
-                                docId,
-                                rev: rev
-                                attId: attId
-                                attachment: attachment,
-                                mimetype: mimetype
-                            ).then(d.resolve)
-                        else
-                            db.putAttachment(docId, attId, rev, attachment, mimetype, handleResponse(d))
+                        db.putAttachment(docId, attId, rev, attachment, mimetype, handleResponse(d))
 
-                    if worker
-                        d.reject()
-                        return postMessage(
-                            'updateAttachment',
-                            docId,
-                            rev: rev
-                            attId: attId
-                            attachment: attachment,
-                            mimetype: mimetype
-                        )
-                    else
                         if not rev
                             populateRev(docId).then(put, (err) -> d.reject(err))
                         else
@@ -207,9 +217,6 @@ m.factory(
                     d.promise
                 getAttachment: (docId, attachmentId) ->
                     d = m.deferred()
-                    if worker
-                        d.reject()
-                        return postMessage('getAttachment', docId, {attachmentId:attachmentId})
                     db.getAttachment(docId, attachmentId, handleResponse(d))
                     d.promise
                 removeAttachment: (docId, attachmentId) ->
@@ -231,10 +238,6 @@ m.factory(
                 findAll: (type) ->
                     d = m.deferred()
 
-                    if worker
-                        d.reject()
-                        return postMessage('findAll', type, {type:type})
-
                     db.query('by_type', {key: [type], attachments:true}, handleResponse(d))
                     d.promise
                 remove: (type, docId) ->
@@ -250,41 +253,48 @@ m.factory(
                         remove(rev)
 
                     d.promise
-                removeAll: (queryFunc) ->
-                     d = m.deferred()
-                     d.reject({msg: 'Not Implemented'})
-                     d.promise
-                on: (evtName, callback) ->
-                    if subscriptions.store[evtName] is undefined
-                        throw new Error("No such event \"#{evtName}\"")
-
-                    id = generateId()
-                    subscriptions.account[evtName][id] = callback
+                removeAll: notImplemented
+                on:  subscriberFactory('store')
 
             @remote =
-                on: (evtName, callback) ->
-                    if subscriptions.remote[evtName] is undefined
-                        throw new Error("No such event \"#{evtName}\"")
-
-                    id = generateId()
-                    subscriptions.account[evtName][id] = callback
-
+                on: subscriberFactory('remote')
 
             @store.registerView({"by_type": "function(doc) { emit([doc.type], doc); }"})
 
-            @ready = readyDeferred.promise
             return @
 
         API.prototype.IDENTIFIER_KEYS = ['_id', '_rev']
 
         (databaseUri) ->
-            if dbCache[databaseUri] is undefined
-                try
-                    worker = new StorageWorker();
-                catch e
-                    console.log("Storage warning: no worker support for #{databaseUri}", e);
-                    worker = null
+            deferred = m.deferred()
+            cachedValue = dbCache[databaseUri]
 
-                dbCache[databaseUri] = new API(new PouchDB(databaseUri), worker)
-            return dbCache[databaseUri]
+            inMainThread = (err) ->
+                console.log("Storage warning: no worker support for #{databaseUri}")
+                if err
+                    console.log(err.stack)
+                a = dbCache[databaseUri] = new API(new PouchDB(databaseUri))
+                deferred.resolve(a)
+
+            if cachedValue is undefined
+                # try
+                #     worker = new WorkerProxy(databaseUri)
+                #     dbCache[databaseUri] = deferred.promise
+                #     worker.ready.then(
+                #         ->
+                #             worker.ready(true)
+                #             a = dbCache[databaseUri] = new API(worker)
+                #             deferred.resolve(a)
+                #             return null
+                #         inMainThread
+                #     )
+                # catch e
+                #     inMainThread(e)
+                inMainThread()
+            else if typeof cachedValue.then == 'function'
+                    return cachedValue
+            else
+                deferred.resolve(cachedValue)
+
+            return deferred.promise
 )
