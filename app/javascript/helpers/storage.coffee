@@ -266,15 +266,14 @@ m.factory(
         API.prototype.IDENTIFIER_KEYS = ['_id', '_rev']
 
         (databaseUri) ->
-            deferred = m.deferred()
             cachedValue = dbCache[databaseUri]
 
-            inMainThread = (err) ->
-                console.log("Storage warning: no worker support for #{databaseUri}")
-                if err
-                    console.log(err.stack)
-                a = dbCache[databaseUri] = new API(new PouchDB(databaseUri))
-                deferred.resolve(a)
+            # inMainThread = (err) ->
+            #     console.log("Storage warning: no worker support for #{databaseUri}")
+            #     if err
+            #         console.log(err.stack)
+            #     a = dbCache[databaseUri] = new API(new PouchDB(databaseUri))
+            #     deferred.resolve(a)
 
             if cachedValue is undefined
                 # try
@@ -290,11 +289,7 @@ m.factory(
                 #     )
                 # catch e
                 #     inMainThread(e)
-                inMainThread()
-            else if typeof cachedValue.then == 'function'
-                    return cachedValue
-            else
-                deferred.resolve(cachedValue)
+                cachedValue = dbCache[databaseUri] = new API(new PouchDB(databaseUri))
 
-            return deferred.promise
+            return cachedValue
 )

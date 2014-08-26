@@ -25,7 +25,7 @@ m.factory(
         currentGallery = null
         clearGalleryTimeout = null
 
-        db = null
+        db = new Storage('puff')
 
         Gallery = ->
             self = @
@@ -144,17 +144,12 @@ m.factory(
             resolveIt = ->
                 _ready.resolve(self)
 
-            promise = Storage('puff')
-            promise.then(
-                (storage) ->
-                    db = storage
-                    db.store.findAll('image').then(
-                        (result) ->
-                            if not result.rows.length
-                                return resolveIt()
-                            importImages(result.rows.map((r) -> r.value)).then(resolveIt, resolveIt)
-                        resolveIt
-                    )
+            db.store.findAll('image').then(
+                (result) ->
+                    if not result.rows.length
+                        return resolveIt()
+                    importImages(result.rows.map((r) -> r.value)).then(resolveIt, resolveIt)
+                resolveIt
             )
 
             return @
