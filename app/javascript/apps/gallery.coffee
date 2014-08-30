@@ -75,6 +75,8 @@ m.factory(
                     break unless row.length > 0
 
                     summedAspectRatios = row.reduce(((sum, ar) -> sum + ar), 0)
+                    if (summedAspectRatios / 100) < self.containerAspectRatio()
+                        summedAspectRatios = self.containerAspectRatio() * 100
                     modifiedWidth = vpWidth / summedAspectRatios
                     endPoint = row.length - 1 + index
                     for img_index in [index..endPoint]
