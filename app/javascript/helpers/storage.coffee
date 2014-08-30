@@ -209,10 +209,10 @@ m.factory(
                     put = (rev) ->
                         db.putAttachment(docId, attId, rev, attachment, mimetype, handleResponse(d))
 
-                        if not rev
-                            populateRev(docId).then(put, (err) -> d.reject(err))
-                        else
-                            put(rev)
+                    if not rev
+                        populateRev(docId).then(put, (err) -> d.reject(err))
+                    else
+                        put(rev)
 
                     d.promise
                 getAttachment: (docId, attachmentId) ->
