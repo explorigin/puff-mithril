@@ -14,6 +14,8 @@ m.factory(
     (PhotoUtils, Storage) ->
         db = Storage('puff')
 
+        debugErrors = -> console.log(arguments)
+
         # Utility functions
         resizeImg = (img, maxWidth, maxHeight, mimetype, quality) ->
             # Resizes src Javascript Image to maxWidth x maxHeight (but maintaining the same aspect ratio)
@@ -75,7 +77,11 @@ m.factory(
                         d.resolve(self)
                     else
                         db.store.updateAttachment(self._id(), 'original', self.blob(), self.mimetype())
-                            .then(-> d.resolve(self))
+                            .then(
+                                ->
+                                    d.resolve(self)
+                                debugErrors
+                            )
                     return d.promise
 
                 data =
@@ -90,24 +96,25 @@ m.factory(
                     data.src = self.src()
 
                 if self._id()
-                    return db.store.update('image', self._id(), data)
-                        .then(saveBlob)
+                    return db.store.update('image', self._id(), data).then(saveBlob, debugErrors)
                 else
                     return db.store.add('image', data)
-                        .then( (result) -> self._id(result.id))
-                        .then(saveBlob)
+                        .then(
+                            (result) -> self._id(result.id)
+                            debugErrors
+                        ).then(saveBlob, debugErrors)
 
             @remove = ->
                 db.store.remove('image', self._id())
 
             @resizeSmallImg = (width, height) ->
                 resizeImg(self.screenImg(), width, height, self.mimetype(), self.quality())
-                .then(
-                    (img) ->
-                        self.smallImg(img)
-                        self.width(width)
-                        self.height(height)
-                )
+                    .then(
+                        (img) ->
+                            self.smallImg(img)
+                            self.width(width)
+                            self.height(height)
+                    )
 
             @loadFromImageOnload = (evt) ->
                 img = evt.target
@@ -130,15 +137,19 @@ m.factory(
                         self.mimetype()
                         self.quality()
                     )
-                ).then( (smallImg) ->
-                    self.smallImg(smallImg)
-                    if not self.saved()
-                        self.save()
-                ).then(->
-                    # Clear original and blob to save memory
-                    self.original(null)
-                    self.blob(null)
-                    _ready.resolve(self)
+                ).then(
+                    (smallImg) ->
+                        self.smallImg(smallImg)
+                        if not self.saved()
+                            return self.save()
+                    debugErrors
+                ).then(
+                    ->
+                        # Clear original and blob to save memory
+                        self.original(null)
+                        self.blob(null)
+                        _ready.resolve(self)
+                    debugErrors
                 )
 
             # Initialization
