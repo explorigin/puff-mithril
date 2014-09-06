@@ -1,18 +1,22 @@
 # helpers/storage.js
 require('mithril')
+require('helpers/utils')
 PouchDB = require('pouchdb/dist/pouchdb.min.js')  #  Separate so the worker can access it.
 StorageWorker = require('worker!helpers/storage-worker')
 
 m.factory(
     'helpers.storage'
-    ->
+    [
+        'helpers.utils'
+    ]
+    (utils) ->
         dbCache = {}
         revMap = {}
 
         handleResponse = (deferred) ->
             (err, result) ->
                 if err
-                    console.log(err)
+                    utils.log(err)
                     return deferred.reject(err)
                 else if result.id and result.rev
                     revMap[result.id] = result.rev
