@@ -2,13 +2,15 @@ var gulp = require('gulp'),
     htmlmin = require('gulp-htmlmin');
 
 gulp.task('copy', ['styles'], function() {
-	var stream = gulp.src('app/*.html')
+    var stream = gulp.src('app/*.html')
 
     if (!global.isWatching) {
         stream = stream.pipe(htmlmin({collapseWhitespace: true}));
     }
 
-	return stream.pipe(gulp.dest('dist'));
+    stream.pipe(gulp.dest('dist'));
+
+    return gulp.src('app/*.{xml,md,txt}').pipe(gulp.dest('dist'));
 });
 
 
