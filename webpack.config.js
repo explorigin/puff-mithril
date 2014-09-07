@@ -25,8 +25,7 @@ module.exports = {
     resolve: {
         modulesDirectories: ['bower_components', 'javascript'],
         alias: {
-            mithril: 'external/di.mithril.js',
-            lodash: 'lodash/dist/lodash'
+            mithril: 'external/di.mithril.js'
         },
         extensions: ['', '.js', '.coffee']
     },

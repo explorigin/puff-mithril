@@ -17,7 +17,7 @@ m.factory(
 
             m('div.form-group', {'class': validationClasses[options.validation]}, [
                 if options.label then m('label', options.label) else ''
-                m('input', _.omit(options, 'label', 'helptext'))
+                m('input', m.omit(options, 'label', 'helptext'))
                 if options.helptext then m('span.help-block', options.helptext) else ''
             ])
 )

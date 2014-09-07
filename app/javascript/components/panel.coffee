@@ -10,5 +10,5 @@ m.factory(
             footer = if options.footer then m('footer.panel-footer', [options.footer]) else ''
             options['class'] = 'panel ' + (options['class'] or '')
 
-            m('section', _.omit(options, 'header', 'content', 'footer'), [header, body, footer])
+            m('section', m.omit(options, 'header', 'content', 'footer'), [header, body, footer])
 )

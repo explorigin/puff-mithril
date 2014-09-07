@@ -1,5 +1,6 @@
 require('mithril')
 require('config')
+require('helpers/utils')
 require('helpers/storage')
 require('components/form')
 require('components/panel')

@@ -14,10 +14,9 @@ m.factory(
         'application.config'
         'models.image'
         'helpers.storage'
-        'helpers.utils'
         'helpers.photo-utils'
     ]
-    (cfg, GalleryImage, Storage, utils, PhotoUtils) ->
+    (cfg, GalleryImage, Storage, PhotoUtils) ->
         borderSize = cfg.apps.gallery.borderSize
         UI_DELAY = 20
         scrollBarWidth = PhotoUtils.scrollBarWidth()
@@ -96,44 +95,44 @@ m.factory(
                 # Read the top file.
                 return unless file = self.files().shift()
 
-                utils.log(file.name)
+                m.log(file.name)
 
                 img = new GalleryImage(file)
                 img.ready.then(
                     (instance) ->
                         # Grab the md5 precomputed hashes of the existing images
-                        imageHashes = _.pluck(self.images(), 'hash').map((hash) -> hash())
+                        imageHashes = m.pluck(self.images(), 'hash').map((hash) -> hash())
                         # If the image is not already in the group, then add it and resize all the images.
                         if instance.hash() not in imageHashes
                             self.images().push(instance)
                             return self.resizeImages()
                     (err) ->
-                        utils.log(err)
+                        m.log(err)
                         setTimeout(_importNextFile, UI_DELAY)
                 ).then(
                     (added) ->
                         m.redraw()
                         setTimeout(_importNextFile, UI_DELAY) unless added is 0
                     (err) ->
-                        utils.log(err)
+                        m.log(err)
                         setTimeout(_importNextFile, UI_DELAY)
                 )
 
             @importFiles = (files) ->
                 # Filter for just our image files
-                self.files(_.filter(files, (f) -> f.type.indexOf('image/') is 0))
+                self.files(Array.prototype.filter.call(files, (f) -> f.type.indexOf('image/') is 0))
                 # Give a delay for the UI to update between image loads.
                 setTimeout(_importNextFile, UI_DELAY)
 
             importImages = (records) ->
-                m.sync(_.pluck(records.map((img) -> new GalleryImage(img)), 'ready')).then(
+                m.sync(m.pluck(records.map((img) -> new GalleryImage(img)), 'ready')).then(
                     (loadedImages) ->
                         self.images().push.apply(self.images(), loadedImages)
                         self.resizeImages()
                     (rejectedImages) ->
                         images = rejectedImages.filter((i) -> i.ready and i.ready() isnt null)
                         self.images().push.apply(self.images(), images)
-                        utils.log(
+                        m.log(
                             "ERROR: Some images could not be loaded.",
                             rejectedImages.filter((i) -> not i.ready or i.ready() is null))
                         self.resizeImages()

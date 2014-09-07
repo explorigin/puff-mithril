@@ -3,7 +3,6 @@ require('config')
 require('helpers/icon')
 require('models/gallery')
 
-_ = require('lodash')
 partition = require('external/linear_partition')
 
 m.factory(
@@ -12,9 +11,8 @@ m.factory(
         'application.config'
         'helpers.icon'
         'models.gallery'
-        'helpers.utils'
     ]
-    (cfg, Icon, Gallery, utils) ->
+    (cfg, Icon, Gallery) ->
         borderSize = cfg.apps.gallery.borderSize
         currentGallery = null
         clearGalleryTimeout = null
@@ -123,7 +121,7 @@ m.factory(
                         self.mode('draghover')
                     m.redraw()
                 (err) ->
-                    utils.log('Error: ' + err)
+                    m.log('Error: ' + err)
             )
 
             return @

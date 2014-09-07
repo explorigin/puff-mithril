@@ -14,7 +14,7 @@ m.factory(
     (PhotoUtils, Storage) ->
         db = Storage('puff')
 
-        debugErrors = -> console.log(arguments)
+        debugErrors = -> m.log(arguments)
 
         # Utility functions
         resizeImg = (img, maxWidth, maxHeight, mimetype, quality) ->

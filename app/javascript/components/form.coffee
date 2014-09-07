@@ -2,7 +2,6 @@
 require('mithril')
 require('helpers/input')
 require('helpers/submit')
-require('lodash')
 
 m.factory(
     'components.form'
@@ -34,5 +33,5 @@ m.factory(
                     )
                     oldSubmit(evt, data)
 
-            m('form', _.omit(options, 'elements'), options.elements.map(dispatcher))
+            m('form', m.omit(options, 'elements'), options.elements.map(dispatcher))
 )

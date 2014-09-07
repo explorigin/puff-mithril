@@ -1,22 +1,19 @@
 # helpers/storage.js
 require('mithril')
-require('helpers/utils')
+
 PouchDB = require('pouchdb/dist/pouchdb.min.js')  #  Separate so the worker can access it.
 StorageWorker = require('worker!helpers/storage-worker')
 
 m.factory(
     'helpers.storage'
-    [
-        'helpers.utils'
-    ]
-    (utils) ->
+    ->
         dbCache = {}
         revMap = {}
 
         handleResponse = (deferred) ->
             (err, result) ->
                 if err
-                    utils.log(err)
+                    m.log(err)
                     return deferred.reject(err)
                 else if result.id and result.rev
                     revMap[result.id] = result.rev
@@ -59,23 +56,23 @@ m.factory(
         #         }
 
         #         if self.ready()
-        #             console.log("Posting: ", packet)
+        #             m.log("Posting: ", packet)
         #             worker.postMessage(packet)
         #         else
-        #             console.log("Queuing: ", packet)
+        #             m.log("Queuing: ", packet)
         #             queue.push(packet)
 
         #         return deferred.promise
 
         #     _receiveMessage = (msg) ->
         #         data = msg.data
-        #         console.log("Received: ", data)
+        #         m.log("Received: ", data)
 
         #         if data.log
         #             try
-        #                 console.log('Worker log: ', JSON.parse(data.log))
+        #                 m.log('Worker log: ', JSON.parse(data.log))
         #             catch e
-        #                 console.log(data.log)
+        #                 m.log(data.log)
         #             return
 
         #         if data.error
@@ -88,10 +85,10 @@ m.factory(
         #         try
         #             workerJobs[data.action][data.id][action](response)
         #         catch e
-        #             console.log('Receive ERROR')
-        #             console.log(e)
-        #             console.log(e.stack)
-        #             console.log(msg)
+        #             m.log('Receive ERROR')
+        #             m.log(e)
+        #             m.log(e.stack)
+        #             m.log(msg)
         #         delete workerJobs[data.action][data.id]
 
         #     _commands.forEach(
@@ -105,7 +102,7 @@ m.factory(
 
         #     workerJobs['create'][uniqueID] = readyDeferred
         #     packet = {action:'create', id:uniqueID++, args:databaseUri + '-worker'}
-        #     console.log("Initial Posting: ", packet)
+        #     m.log("Initial Posting: ", packet)
         #     worker.postMessage(packet)
 
         #     return @

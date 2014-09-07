@@ -3,7 +3,7 @@ require('mithril')
 require('config')
 require('signals')
 require('helpers/icon')
-require('helpers/mithril-helpers')
+require('helpers/utils')
 
 require('apps/files')
 require('apps/gallery')
