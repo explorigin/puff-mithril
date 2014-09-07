@@ -26,8 +26,11 @@ require('mithril')
             layoutModule.controller(contentModule.controller)
         view:
             layoutModule.view(contentModule.view)
-    m.log = (msg) ->
-        console.log(msg)
+    m.log = (msg, obj) ->
+        if obj isnt undefined
+            console.log(msg, obj)
+        else
+            console.log(msg)
 
     m.pluck = (arrayOfObjs, propName) ->
         arrayOfObjs.map((obj) -> obj[propName])

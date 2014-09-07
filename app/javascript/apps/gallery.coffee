@@ -74,21 +74,27 @@ m.factory(
                 return false
 
             @dragEnter = (evt) ->
-                self.mode('draghover')
-                if self.modeChangeTimeout()
-                    clearTimeout(self.modeChangeTimeout())
-                    self.modeChangeTimeout(null)
+                setTimeout(
+                    ->
+                        if self.modeChangeTimeout()
+                            clearTimeout(self.modeChangeTimeout())
+                            self.modeChangeTimeout(null)
+                        self.mode('draghover')
+                    0
+                )
+
 
             @dragLeave = (evt) ->
-                self.modeChangeTimeout(
-                    setTimeout(
-                        ->
-                            self.mode('grid')
-                            m.redraw()
-                            self.modeChangeTimeout(null)
-                        100
+                if not self.modeChangeTimeout()
+                    self.modeChangeTimeout(
+                        setTimeout(
+                            ->
+                                self.modeChangeTimeout(null)
+                                self.mode('grid')
+                                m.redraw()
+                            500
+                        )
                     )
-                )
 
             @dragOver = (evt) =>
                 # This is needed to tell the browser that the element can accept a drop.
