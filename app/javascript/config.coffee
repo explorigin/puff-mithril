@@ -5,6 +5,7 @@ m.factory(
     ->
         cfg =
             iconset: 'fontawesome'
+            ui_delay: 20
             pages:
                 home: 'home.html'
                 login: 'index.html'
@@ -14,11 +15,11 @@ m.factory(
             ]
             applications: [
                 {
-                    name: 'Files'
-                    icon: 'file'
-                    query: ''
-                    module: 'files'
-                }, {
+                #     name: 'Files'
+                #     icon: 'file'
+                #     query: ''
+                #     module: 'files'
+                # }, {
                     name: 'Notes'
                     icon: 'check'
                     query: null
@@ -29,6 +30,7 @@ m.factory(
                     query: null
                     module: 'gallery'
                     borderSize: 4
+                    optimalImageHeightRatio: 3/8
                 # }, {
                 #     name: 'Invoice'
                 #     icon: 'book'

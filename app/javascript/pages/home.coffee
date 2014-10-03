@@ -133,7 +133,7 @@ document.addEventListener(
             document.body
             ""
             {
-                "": m.mixinLayout(m.handle('layout'), m.handle('apps.files'))
+                "": m.mixinLayout(m.handle('layout'), m.handle('apps.gallery'))
                 "gallery": m.mixinLayout(m.handle('layout'), m.handle('apps.gallery'))
                 "laverna": m.mixinLayout(m.handle('layout'), m.handle('apps.notes'))
             }

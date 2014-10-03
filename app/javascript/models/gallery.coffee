@@ -18,7 +18,7 @@ m.factory(
     ]
     (cfg, GalleryImage, Storage, PhotoUtils) ->
         borderSize = cfg.apps.gallery.borderSize
-        UI_DELAY = 20
+        UI_DELAY = cfg.ui_delay
         scrollBarWidth = PhotoUtils.scrollBarWidth()
 
         db = Storage('puff')
@@ -31,7 +31,6 @@ m.factory(
 
             # Properties
             @images = m.prop([])  # Array of Gallery Photo controllers
-            @optimalImageHeightRatio = m.prop(3/8)
             @files = m.prop([])  # Incoming files
             @container = m.prop(null)
             @ready = _ready.promise
@@ -41,7 +40,7 @@ m.factory(
             @containerHeight = -> if self.container() then self.container().clientHeight else 0
             @containerAspectRatio = -> if self.container() then self.containerWidth() / self.containerHeight() else 1
 
-            @optimalImageHeight = -> window.screen.height * @optimalImageHeightRatio()
+            @optimalImageHeight = -> window.screen.height * cfg.apps.gallery.optimalImageHeightRatio
 
             @totalOptimalImageWidth = ->
                 optimalHeight = @optimalImageHeight()
