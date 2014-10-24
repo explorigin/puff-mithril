@@ -234,7 +234,7 @@ m.factory(
                     d.promise
                 find: (type, id) ->
                     d = m.deferred()
-                    d.resolve([])
+                    db.get(id, handleResponse(d))
                     d.promise
                 findAll: (type) ->
                     d = m.deferred()

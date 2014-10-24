@@ -8,6 +8,11 @@ require('mithril')
         option = options[key]
         option[0](option[1])
 
+    m.unwrap = (prop) ->
+        if typeof prop is 'function'
+            return prop()
+        return prop
+
     m.toggle = (prop) ->
         (evt) -> prop(not prop())
 
@@ -39,5 +44,18 @@ require('mithril')
         output = {}
         Object.keys(obj).filter((key) -> key in arguments).forEach((key) -> output[key] = obj[key])
         return output
+
+    m.alert = window.alert
+
+    m.confirm = (prompt) ->
+        d = m.deferred()
+        output = window.confirm(prompt)
+
+        if output
+            d.resolve(output)
+        else
+            d.reject(output)
+
+        d.promise
 
 )(Mithril)

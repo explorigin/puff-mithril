@@ -23,6 +23,50 @@ m.factory(
 
         db = Storage('puff')
 
+        debugErrors = -> m.log(arguments)
+
+        Album = (initialData) ->
+            self = @
+
+            _ready = m.deferred()
+            @ready = _ready.promise
+
+            @_id = m.prop(initialData._id)
+            @_rev = m.prop(initialData._rev)
+
+            @images = m.prop(initialData.images or [])
+            @name = m.prop(initialData.name or '')
+            @ready = _ready.promise
+
+            @saved = () -> db.IDENTIFIER_KEYS.every((x) -> self[x]())
+
+            @addImage = (image) ->
+                id = m.unwrap(image._id)
+                if id not in self.images()
+                    self.images().push(id)
+                    return true
+                return false
+
+            @save = ->
+                data =
+                    images: self.images()
+                    name: self.name()
+
+                m.log(data)
+
+                if self._id()
+                    return db.store.update('album', self._id(), data).then(m.log, m.log)
+                else
+                    return db.store.add('album', data)
+                        .then(
+                            (result) -> self._id(result.id)
+                            debugErrors
+                        )
+
+            _ready.resolve()
+
+            return @
+
         return ->
             self = @
             resizeImageLock = null
@@ -33,9 +77,12 @@ m.factory(
             @images = m.prop([])  # Array of Gallery Photo controllers
             @files = m.prop([])  # Incoming files
             @container = m.prop(null)
+            @albums = m.prop({})
+            @activeAlbumId = m.prop(null)
             @ready = _ready.promise
 
             # Computed Properties
+            @activeAlbum = -> self.albums()[self.activeAlbumId()]
             @containerWidth = -> if self.container() then self.container().clientWidth - scrollBarWidth else 0
             @containerHeight = -> if self.container() then self.container().clientHeight else 0
             @containerAspectRatio = -> if self.container() then self.containerWidth() / self.containerHeight() else 1
@@ -44,14 +91,14 @@ m.factory(
 
             @totalOptimalImageWidth = ->
                 optimalHeight = @optimalImageHeight()
-                @images().reduce(
+                self.images().reduce(
                     (sum, i) -> sum + i.aspectRatio() * optimalHeight
                     0
                 )
 
             @partitions = ->
                 rowCount = Math.ceil(@totalOptimalImageWidth() / self.containerWidth())
-                partition(@images().map((i) -> i.aspectRatio() * 100), rowCount)
+                partition(self.images().map((i) -> i.aspectRatio() * 100), rowCount)
 
             # Methods
             @resizeImages = ->
@@ -59,9 +106,8 @@ m.factory(
                     return resizeImageLock.promise
 
                 resizeImageLock = m.deferred()
-                window.images  = self.images()
 
-                rows = @partitions()
+                rows = self.partitions()
                 index = 0
                 total = 0
                 vpWidth = self.containerWidth() * 100
@@ -75,7 +121,7 @@ m.factory(
                     modifiedWidth = vpWidth / summedAspectRatios
                     endPoint = row.length - 1 + index
                     for img_index in [index..endPoint]
-                        img = @images()[img_index]
+                        img = self.images()[img_index]
                         img.resizeSmallImg(
                             (modifiedWidth - borderSize) * img.aspectRatio()
                             modifiedWidth - borderSize
@@ -100,10 +146,12 @@ m.factory(
                 img.ready.then(
                     (instance) ->
                         # Grab the md5 precomputed hashes of the existing images
-                        imageHashes = m.pluck(self.images(), 'hash').map((hash) -> hash())
+                        imageHashes = m.pluck(self.activeAlbum().images(), 'hash').map((hash) -> hash())
                         # If the image is not already in the group, then add it and resize all the images.
                         if instance.hash() not in imageHashes
                             self.images().push(instance)
+                            if self.activeAlbum().addImage(instance)
+                                self.activeAlbum().save()
                             return self.resizeImages()
                     (err) ->
                         m.log(err)
@@ -126,11 +174,17 @@ m.factory(
             importImages = (records) ->
                 m.sync(m.pluck(records.map((img) -> new GalleryImage(img)), 'ready')).then(
                     (loadedImages) ->
-                        self.images().push.apply(self.images(), loadedImages)
+                        added = false
+                        for image in loadedImages
+                            if self.activeAlbum().addImage(image)
+                                added = true
+                            self.images().push(image)
+                        if added
+                            self.activeAlbum().save()
                         self.resizeImages()
                     (rejectedImages) ->
-                        images = rejectedImages.filter((i) -> i.ready and i.ready() isnt null)
-                        self.images().push.apply(self.images(), images)
+                        # images = rejectedImages.filter((i) -> i.ready and i.ready() isnt null)
+                        # self.images().push.apply(self.images(), images)
                         m.log(
                             "ERROR: Some images could not be loaded.",
                             rejectedImages.filter((i) -> not i.ready or i.ready() is null))
@@ -139,15 +193,54 @@ m.factory(
 
             # Initialization Processing
             resolveIt = ->
+                console.log('')
                 _ready.resolve(self)
 
-            db.store.findAll('image').then(
-                (result) ->
+            findAlbums = ->
+                attempts = 100
+                deferred = m.deferred()
+
+                _resolveFindAlbums = -> deferred.resolve()
+                _findAlbum = -> db.store.findAll('album')
+
+                _albumFound = (result) ->
                     if not result.rows.length
-                        return resolveIt()
-                    importImages(result.rows.map((r) -> r.value)).then(resolveIt, resolveIt)
-                resolveIt
-            )
+                        m.log('Error creating initial Album.')
+                        throw result
+
+                    for albumRecord in result.rows
+                        self.albums()[albumRecord.id] = new Album(albumRecord.value)
+                    self.activeAlbumId(result.rows[0].id)
+
+                    m.sync(self.activeAlbum().images().map((id) -> db.store.find('image', id))).then(
+                        (imagesResult) ->
+                            importImages(imagesResult).then(_resolveFindAlbums, _resolveFindAlbums)
+                        _resolveFindAlbums
+                    )
+
+                _checkResult = (result) ->
+                    if not result.rows.length
+                        album = new Album({name: '[New Album]'})
+                        return album.save().then(_findAlbum, _fail).then(_checkResult, _delay)
+                    return _albumFound(result)
+
+                _delay = ->
+                    attempts -= 1
+                    if attempts is 0
+                        deferred.reject('No database found.')
+
+                    setTimeout(
+                        -> _findAlbum().then(_checkResult, _delay)
+                        10
+                    )
+
+                _findAlbum().then(_checkResult, _delay)
+
+                return deferred.promise
+
+            _fail = -> m.alert('Error creating initial Album.')
+
+            findAlbums().then(resolveIt, _fail)
 
             return @
 )
