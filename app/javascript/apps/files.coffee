@@ -1,25 +1,18 @@
-require('mithril')
-require('config')
-require('helpers/icon')
+m = require('mithril')
+cfg = require('config')
+Icon = require('helpers/icon')
 
-m.factory(
-    'apps.files',
-    [
-        'application.config'
-        'helpers.icon'
-    ]
-    (cfg, Icon) ->
-        controller: () ->
-            return @
+module.exports =
+    controller: () ->
+        return @
 
-        view: (ctrl) ->
-            m(
-                '.files.app-canvas'
-                [
-                    m('.slate.col-md-offset-3.col-md-6.text-center', [
-                        m('h1', [Icon('road')])
-                        m('h2', ['Under construction'])
-                    ])
-                ]
-            )
-)
+    view: (ctrl) ->
+        m(
+            '.files.app-canvas'
+            [
+                m('.slate.col-md-offset-3.col-md-6.text-center', [
+                    m('h1', [Icon('road')])
+                    m('h2', ['Under construction'])
+                ])
+            ]
+        )

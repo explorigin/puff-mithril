@@ -1,123 +1,114 @@
-require('mithril')
-require('config')
-require('helpers/utils')
-require('helpers/storage')
-require('components/form')
-require('components/panel')
+m = require('mithril')
+cfg = require('config')
+Storage = require('helpers/storage')
+Form = require('components/form')
+Panel = require('components/panel')
 
-m.factory(
-    'pages.index',
-    [
-        'application.config'
-        'components.form'
-        'components.panel'
-        'helpers.storage'
+
+USER_INPUT = 'u'
+CHECKING = 'c'
+VALID = 'v'
+NOT_VALID = 'n'
+NOT_SHOWN = 'i'
+
+PANEL_ANIMATION =
+    i: 'hidden'
+    v: 'animated slideOutUp'
+    u: 'animated slideInDown'
+    c: ''
+    n: ''
+
+db = new Storage('puff')
+
+PageLayout =
+    controller: () ->
+        @timeout = m.prop(null)
+        @status = m.prop(NOT_SHOWN)
+
+        @mouseover = (evt) =>
+            if @status() is NOT_SHOWN
+                @timeout = setTimeout(
+                    () =>
+                        @status(USER_INPUT)
+                    3000
+                )
+
+        @mouseout = (evt) =>
+            if @status() is NOT_SHOWN
+                clearTimeout(@timeout)
+
+        @submit = (evt, data) =>
+            evt.preventDefault()
+            @status(CHECKING)
+            db.account.signIn(data.username, data.password).then(
+                () =>
+                    @status(VALID)
+                    setTimeout(
+                        () ->
+                            window.location = cfg.pages.home
+                        500
+                    )
+                () =>
+                    @status(NOT_VALID)
+            )
+
+        return @
+
+    view: (ctrl) -> [
+        m('section.login', [
+            m('.col-md-4.col-md-offset-4', [
+                Panel(
+                    {'class': PANEL_ANIMATION[ctrl.status()]}
+                    Form(
+                        elements: [
+                            {
+                                placeholder: 'Username'
+                                name: 'username'
+                                autofocus: 'autofocus'
+                                disabled: ctrl.status() is CHECKING
+                                validation: if ctrl.status() is NOT_VALID then 'error' else ''
+                                helptext: if ctrl.status() is NOT_VALID then 'Username or password is incorrect.' else ''
+                            },
+                            {
+                                placeholder: 'Password'
+                                name: 'password'
+                                type: 'password'
+                                validation: if ctrl.status() is NOT_VALID then 'error' else ''
+                                helptext: if ctrl.status() is NOT_VALID then m.trust('&nbsp;') else ''
+                                disabled: ctrl.status() is CHECKING
+                            },
+                            {
+                                text: 'Login'
+                                type: 'submit'
+                                disabled: ctrl.status() is CHECKING
+                            }
+                        ]
+                        'class': 'form-inline'
+                        onsubmit: ctrl.submit
+                    )
+                )
+            ])
+        ])
+
+        m('div', {'class': 'floater'})
+
+        m('div', {'class': 'centered'}, [
+            m('img', {
+                src:'images/cookiemonster.gif'
+                alt:'Waiting Cookie Monster'
+                onmouseover: ctrl.mouseover
+                onmouseout: ctrl.mouseout
+            })
+        ])
+
+        m('footer', [
+            m('ul',
+                cfg.oldLinks.map(
+                    (link) ->
+                        m('li', [m('a', {href: link.href}, [link.text])])
+                )
+            )
+        ])
     ]
-    (cfg, Form, Panel, Storage) ->
-        USER_INPUT = 'u'
-        CHECKING = 'c'
-        VALID = 'v'
-        NOT_VALID = 'n'
-        NOT_SHOWN = 'i'
 
-        PANEL_ANIMATION =
-            i: 'hidden'
-            v: 'animated slideOutUp'
-            u: 'animated slideInDown'
-            c: ''
-            n: ''
-
-        db = new Storage('puff')
-
-        controller: () ->
-            @timeout = m.prop(null)
-            @status = m.prop(NOT_SHOWN)
-
-            @mouseover = (evt) =>
-                if @status() is NOT_SHOWN
-                    @timeout = setTimeout(
-                        () =>
-                            @status(USER_INPUT)
-                        3000
-                    )
-
-            @mouseout = (evt) =>
-                if @status() is NOT_SHOWN
-                    clearTimeout(@timeout)
-
-            @submit = (evt, data) =>
-                evt.preventDefault()
-                @status(CHECKING)
-                db.account.signIn(data.username, data.password).then(
-                    () =>
-                        @status(VALID)
-                        setTimeout(
-                            () ->
-                                window.location = cfg.pages.home
-                            500
-                        )
-                    () =>
-                        @status(NOT_VALID)
-                )
-
-            return @
-
-        view: (ctrl) -> [
-            m('section.login', [
-                m('.col-md-4.col-md-offset-4', [
-                    Panel(
-                        {'class': PANEL_ANIMATION[ctrl.status()]}
-                        Form(
-                            elements: [
-                                {
-                                    placeholder: 'Username'
-                                    name: 'username'
-                                    autofocus: 'autofocus'
-                                    disabled: ctrl.status() is CHECKING
-                                    validation: if ctrl.status() is NOT_VALID then 'error' else ''
-                                    helptext: if ctrl.status() is NOT_VALID then 'Username or password is incorrect.' else ''
-                                },
-                                {
-                                    placeholder: 'Password'
-                                    name: 'password'
-                                    type: 'password'
-                                    validation: if ctrl.status() is NOT_VALID then 'error' else ''
-                                    helptext: if ctrl.status() is NOT_VALID then m.trust('&nbsp;') else ''
-                                    disabled: ctrl.status() is CHECKING
-                                },
-                                {
-                                    text: 'Login'
-                                    type: 'submit'
-                                    disabled: ctrl.status() is CHECKING
-                                }
-                            ]
-                            'class': 'form-inline'
-                            onsubmit: ctrl.submit
-                        )
-                    )
-                ])
-            ])
-
-            m('div', {'class': 'floater'})
-
-            m('div', {'class': 'centered'}, [
-                m('img', {
-                    src:'images/cookiemonster.gif'
-                    alt:'Waiting Cookie Monster'
-                    onmouseover: ctrl.mouseover
-                    onmouseout: ctrl.mouseout
-                })
-            ])
-
-            m('footer', [
-                m('ul',
-                    cfg.oldLinks.map(
-                        (link) ->
-                            m('li', [m('a', {href: link.href}, [link.text])])
-                    )
-                )
-            ])
-        ]
-)
-
-document.addEventListener('DOMContentLoaded', -> m.module(document.body, m.handle('pages.index')))
+document.addEventListener('DOMContentLoaded', -> m.module(document.body, PageLayout))

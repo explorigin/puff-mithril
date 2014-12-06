@@ -1,4 +1,4 @@
-require('mithril')
+m = require('../../bower_components/mithril/mithril')
 
 ((m) ->
     # Choose among a dictionary of options.
@@ -59,3 +59,5 @@ require('mithril')
         d.promise
 
 )(Mithril)
+
+module.exports = m
