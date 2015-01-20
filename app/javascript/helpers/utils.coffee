@@ -58,6 +58,8 @@ m = require('../../bower_components/mithril/mithril')
 
         d.promise
 
-)(Mithril)
+)(m)
+
+window.m = m
 
 module.exports = m
