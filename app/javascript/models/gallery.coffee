@@ -135,7 +135,7 @@ module.exports = ->
         img.ready.then(
             (instance) ->
                 # Grab the md5 precomputed hashes of the existing images
-                imageHashes = m.pluck(self.activeAlbum().images(), 'hash').map((hash) -> hash())
+                imageHashes = self.activeAlbum().images()
                 # If the image is not already in the group, then add it and resize all the images.
                 if instance.hash() not in imageHashes
                     self.images().push(instance)
@@ -182,7 +182,6 @@ module.exports = ->
 
     # Initialization Processing
     resolveIt = ->
-        console.log('')
         _ready.resolve(self)
 
     findAlbums = ->
@@ -192,6 +191,27 @@ module.exports = ->
         _resolveFindAlbums = -> deferred.resolve()
         _findAlbum = -> db.store.findAll('album')
 
+        _loadImages = (images) ->
+            m.sync(images.map((id) -> db.store.find('image', id))).then(
+                (imagesResult) ->
+                    importImages(imagesResult).then(_resolveFindAlbums, _resolveFindAlbums)
+                (imagesResult) ->
+                    resultLen = imagesResult.length
+                    updated = false
+                    while --resultLen
+                        img = imagesResult[resultLen-1]
+                        if img.message?
+                            self.activeAlbum().images(self.activeAlbum().images().splice(resultLen-1, 1))
+                            updated = true
+                    if updated
+                        self.activeAlbum().save().then(
+                            () -> _loadImages(self.activeAlbum().images()),
+                            _resolveFindAlbums
+                        )
+                    else
+                        importImages(imagesResult).then(_resolveFindAlbums, _resolveFindAlbums)
+            )
+
         _albumFound = (result) ->
             if not result.rows.length
                 m.log('Error creating initial Album.')
@@ -200,12 +220,7 @@ module.exports = ->
             for albumRecord in result.rows
                 self.albums()[albumRecord.id] = new Album(albumRecord.value)
             self.activeAlbumId(result.rows[0].id)
-
-            m.sync(self.activeAlbum().images().map((id) -> db.store.find('image', id))).then(
-                (imagesResult) ->
-                    importImages(imagesResult).then(_resolveFindAlbums, _resolveFindAlbums)
-                _resolveFindAlbums
-            )
+            _loadImages(self.activeAlbum().images())
 
         _checkResult = (result) ->
             if not result.rows.length

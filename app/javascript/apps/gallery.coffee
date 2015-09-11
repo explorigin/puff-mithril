@@ -47,16 +47,25 @@ module.exports =
 
         @removeImage = (index) ->
             ->
+                album = self.gallery().activeAlbum()
                 if self.focusIndex() == index
                     self.focusIndex(null)
-                img = self.gallery().images().splice(index, 1)
-                img[0].remove()
-                if self.gallery().images().length
-                    self.mode('grid')
-                    self.gallery().resizeImages()
-                else
-                    self.mode('draghover')
+                album.images().splice(index, 1)
+                album.save().then(
+                    ->
+                        img = self.gallery().images().splice(index, 1)
+                        img[0].remove()
+                ).then(
+                    ->
+                        if album.images().length
+                            self.mode('grid')
+                            self.gallery().resizeImages()
+                        else
+                            self.mode('draghover')
+                )
 
+
+                self.gallery().activeAlbum().save()
 
         @dragDrop = (evt) ->
             self.gallery().importFiles(evt.dataTransfer.files)
