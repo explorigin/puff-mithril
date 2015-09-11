@@ -25,7 +25,7 @@ cfg =
             query: null
             module: 'gallery'
             borderSize: 4
-            optimalImageHeightRatio: 3/8
+            optimalImageHeightRatio: 1/3
         # }, {
         #     name: 'Invoice'
         #     icon: 'book'

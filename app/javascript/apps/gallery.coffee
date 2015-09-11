@@ -220,6 +220,7 @@ module.exports =
                 )
                 m(
                     '.album.pane'
+                    ondragover: ctrl.dragOver
                     ondragenter: m.debubble(ctrl.dragEnter)
                     g.images().map(albumImgTmpl)
                 )
